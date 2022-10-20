@@ -1,16 +1,17 @@
 package main.java.BotPack.Processors;
 
+import main.java.BotPack.Builders.KeyboardBuilder;
 import main.java.BotPack.DataTypes.Cache;
 import main.java.BotPack.DataTypes.Connection;
+import main.java.BotPack.DataTypes.UserDataToSave;
 import main.java.BotPack.Properties;
-import main.java.BotPack.Senders.Callbacker;
-import main.java.BotPack.Senders.Callbacker.LogFormat;
-import main.java.BotPack.Senders.Callbacker.UserMessageLogFormat;
+import main.java.BotPack.Senders.SendBotMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 public class Processer
@@ -23,6 +24,7 @@ public class Processer
 	{
 		connections = new ArrayList<>();
 	}
+
 	public static void processUpdate(Update update)// Добавляет зависимости и возвращает тип поведения бота
 	{
 		cache = new Cache();
@@ -30,38 +32,6 @@ public class Processer
 
 		if(update.hasMessage()) processMessage();
 		if(update.hasCallbackQuery()) processButton();
-	}
-
-	public static boolean spamFilter()
-	{
-		Connection connection = cache.connection;
-
-/*		if(!connection.startedCountdown)
-		{
-			startCountdown();
-			connection.startedCountdown = true;
-		}*/
-
-		if(connection.isBanned)
-		{
-			String msg = cache.update.getMessage().getText().toLowerCase();
-			if(msg.contains("прости") || msg.contains("извини") || msg.contains("не буду") || msg.contains("sorry") || msg.contains("сори") || msg.contains("сорри"))
-			{
-				cache.connection.isBanned = false;
-				cache.connection.countMessages = 0;
-				Callbacker.sendNewCallback("Ладно, так уж и быть, прощаю :))", UserMessageLogFormat.NOTHING, LogFormat.ONE_LINE, false);
-				return true;
-			}
-		}
-
-		if(!connection.isBanned)
-		{
-			if(connection.countMessages >= 10) connection.isBanned = true;
-
-			if(connection.isBanned) Callbacker.sendNewCallback("Я устал, хватит спамить и попроси прощения!", UserMessageLogFormat.NOTHING, LogFormat.ONE_LINE, false);
-		}
-		if(connection.isBanned) return true;
-		return false;
 	}
 
 	public static void processButton()
@@ -101,7 +71,8 @@ public class Processer
 
 						connection.setMenuStep(MenuStep.MENU);
 
-						Callbacker.sendNewCallback("Тест прерван");
+						SendBotMessage.send("Тест прерван");
+
 					}
 					case "CONTINUE" ->
 					{
@@ -197,9 +168,9 @@ public class Processer
 				SendMessage message = new SendMessage();
 				message.setText(text);
 				message.setReplyMarkup(cache.connection.activeMessages.versionMessage.getReplyMarkup());
-				message.setChatId(Callbacker.getChatID());
-
-				Callbacker.editMessage(message, cache.connection.activeMessages.versionMessage.getMessageId());
+				message.setChatId(Connection.getChatID());
+				Deleter.requestForDeletion(SendDifferentMessages.ActiveMessageType.VERSION_MESSAGE);
+				SendBotMessage.send(message);
 			}
 		}
 	}
@@ -217,7 +188,7 @@ public class Processer
 		{
 			try
 			{
-				String text = Callbacker.getMessageText();
+				String text = Connection.getMessageText();
 				text = text.replaceAll("@ARC_Femida_bot", "");
 
 				String[] params = text.split(" ");
@@ -227,7 +198,7 @@ public class Processer
 
 			}catch(IllegalArgumentException e)
 			{
-				Callbacker.sendNewCallback(Properties.get("bot.say.command.don't_know"), UserMessageLogFormat.USER_MESSAGE_TEXT, LogFormat.ONE_LINE, false);
+				SendBotMessage.send(Properties.get("bot.say.command.don't_know"));
 			}
 		}
 		else // Если это обычное сообщение
@@ -248,32 +219,54 @@ public class Processer
 				{
 					case START ->
 					{
-						Callbacker.sendNewCallback(Properties.get("bot.say.command.start"), UserMessageLogFormat.USER_MESSAGE_TEXT, LogFormat.ONE_LINE, false);
+						SendBotMessage.send(Properties.get("bot.say.command.start"));
 					}
 					case CANCEL ->
 					{
-						Callbacker.sendNewCallback(Properties.get("bot.say.command.cancel"), UserMessageLogFormat.USER_MESSAGE_TEXT, LogFormat.ONE_LINE, false);
+						SendBotMessage.send(Properties.get("bot.say.command.cancel"));
 					}
 					case TESTING ->
 					{
 						SendDifferentMessages.send(SendDifferentMessages.ActiveMessageType.REQUEST_START_TEST_MESSAGE);
 					}
-					case ABOUT ->
-					{
-						Callbacker.sendNewCallback(Properties.get("bot.say.command.about"), UserMessageLogFormat.USER_MESSAGE_TEXT, LogFormat.ONE_LINE, false);
-					}
 					case VERIFICATION ->
 					{
 						connection.verification();
 					}
-					case VERSION ->
+					case MY_COMMANDS ->
 					{
-						SendDifferentMessages.send(SendDifferentMessages.ActiveMessageType.VERSION_MESSAGE);
+						if(connection.tgBdRelation == null)
+						{
+							SendBotMessage.send("Пройдите верификацию для определения уровня доступа /verification");
+							return;
+						}
+						KeyboardBuilder builder = new KeyboardBuilder();
+						switch(connection.tgBdRelation.position)
+						{
+							case READER ->
+							{
+								String s = "Уровень доступа: читатель.\n\n";
+								s += "Вам доступны следующие команды: ";
+
+								builder.addRow(Map.ofEntries(Map.entry("\uD83C\uDF0FГлобальный рейтинг", "global_rating")));
+								builder.addRow(Map.ofEntries(Map.entry("\uD83D\uDD0EПоиск по рейтингу", "rating_search")));
+								builder.addRow(Map.ofEntries(Map.entry("\uD83D\uDC64Просмотр аккаунта", "rating_search")));
+
+								SendMessage messageWithKeyboard = builder.getMessageWithKeyboard();
+								messageWithKeyboard.setChatId(Connection.getChatID());
+								messageWithKeyboard.setText(s);
+
+								SendBotMessage.send(messageWithKeyboard);
+							}
+							case EDITOR ->
+							{
+							}
+						}
 					}
-					case FEMIDA ->
-					{
-						SendDifferentMessages.send(SendDifferentMessages.ActiveMessageType.FEMIDA_ACTIONS);
-					}
+
+					//case ABOUT -> {SendBotMessage.send(Properties.get("bot.say.command.about"), UserMessageLogFormat.USER_MESSAGE_TEXT, LogFormat.ONE_LINE, false);}
+					//case VERSION -> {SendDifferentMessages.send(SendDifferentMessages.ActiveMessageType.VERSION_MESSAGE);}
+					//case FEMIDA -> {SendDifferentMessages.send(SendDifferentMessages.ActiveMessageType.FEMIDA_ACTIONS);}
 				}
 			}
 			case CHECKING_VERSION ->
@@ -316,14 +309,14 @@ public class Processer
 //				return;
 			}
 		}
-		Callbacker.sendNewCallback(Properties.get("bot.replies.to.text.don't_know"), UserMessageLogFormat.USER_MESSAGE_TEXT, Callbacker.LogFormat.NORMAL, false);
+		SendBotMessage.send(Properties.get("bot.replies.to.text.don't_know"));
 	}
 
 	public static void checkConnections()
 	{
 		boolean isFind = false;// Ищем пользователя в списке существующих
 
-		String name = Callbacker.getName(); // Получаем ID пользователя
+		String name = Connection.getName(); // Получаем ID пользователя
 
 		for(Connection c : connections) // Ищем в уже зарегистрированных пользователях
 		{
@@ -338,7 +331,8 @@ public class Processer
 		if(!isFind)
 		{
 			cache.connection = addConnection(name, MenuStep.MENU);
-			Callbacker.sendNewCallback(String.format("log: Новый пользователь {UserName = %s; ChatID = %s} (%s)", Callbacker.getName(), Callbacker.getChatID(), connections.size()), UserMessageLogFormat.NOTHING, Callbacker.LogFormat.LOG_DELIMITERING, false);
+			String message = String.format("log: Новый пользователь {UserName = %s; ChatID = %s} (%s)", Connection.getName(), Connection.getChatID(), connections.size());
+			System.out.println(message);
 		}
 
 		for(Connection c : connections)
@@ -357,16 +351,53 @@ public class Processer
 	{
 		Connection connection = new Connection(name, menuStep);
 		connections.add(connection);
-		connection.save();
 
 		return connection;
+	}
+	public static Connection addConnection(UserDataToSave data)
+	{
+		Connection connection = data.getConnection();
+		connections.add(connection);
+		return connection;
+	}
+
+	public static boolean spamFilter()
+	{
+		Connection connection = cache.connection;
+
+/*		if(!connection.startedCountdown)
+		{
+			startCountdown();
+			connection.startedCountdown = true;
+		}*/
+
+		if(connection.isBanned)
+		{
+			String msg = cache.update.getMessage().getText().toLowerCase();
+			if(msg.contains("прости") || msg.contains("извини") || msg.contains("не буду") || msg.contains("sorry") || msg.contains("сори") || msg.contains("сорри"))
+			{
+				cache.connection.isBanned = false;
+				cache.connection.countMessages = 0;
+				SendBotMessage.send("Ладно, так уж и быть, прощаю :))");
+				return true;
+			}
+		}
+
+		if(!connection.isBanned)
+		{
+			if(connection.countMessages >= 10) connection.isBanned = true;
+
+			if(connection.isBanned) SendBotMessage.send("Я устал, хватит спамить и попроси прощения!");
+		}
+		if(connection.isBanned) return true;
+		return false;
 	}
 
 	public enum MenuStep
 	{MENU, PROCESS_TESTING, CHECKING_VERSION}
 
 	public enum GlobalCommand
-	{CANCEL, TESTING, ABOUT, VERIFICATION, START, VERSION, FEMIDA}
+	{CANCEL, TESTING, VERIFICATION, START, MY_COMMANDS}
 
 }
 

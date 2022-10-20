@@ -1,5 +1,7 @@
 package main.java.BotPack.Builders;
 
+import org.telegram.telegrambots.meta.api.methods.ParseMode;
+import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 
@@ -35,6 +37,13 @@ public class KeyboardBuilder
 	{
 		inlineKeyboardMarkup.setKeyboard(rows);
 		return inlineKeyboardMarkup;
+	}
+	public SendMessage getMessageWithKeyboard()
+	{
+		SendMessage message = new SendMessage();
+		message.setParseMode(ParseMode.MARKDOWN);
+		message.setReplyMarkup(getInlineKeyboardMarkup());
+		return message;
 	}
 	public static InlineKeyboardButton newButton(String name, String callback)
 	{

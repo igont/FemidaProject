@@ -11,7 +11,6 @@ import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.Objects;
 
 import static main.java.BotPack.FilesPack.FilesManipulator.readConfig;
 
@@ -22,22 +21,22 @@ public class Main
 
 	public static void main(String[] args) throws TelegramApiException, IOException, SQLException
 	{
+
 		Logger logger = LoggerFactory.getLogger(Main.class);
 		System.out.println("Starting Femida Project...");
 		System.out.println("------------------------------------------------------------------");
+
+		FilesManipulator.getResourcesPath(); // Получаем путь до файла с ресурсами
+		readConfig(); // Читаем переменные из файла
 
 		TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
 		botsApi.registerBot(myBot);
 		System.out.println("Telegram bot:           Connected");
 
 		//-------------------------------------------------------------------------------------------------------------------------
-		getResourcesPath();
-		readConfig(); // Читаем переменные из файла
 		ExcelSQLTemp.connect();
 		System.out.println("PostgreSQL:             Connected");
-
 		System.out.println("Resources path:         " + Config.resourcesPath);
-
 		System.out.println("Connections loaded:     " + FilesManipulator.loadSavedConnections());
 		System.out.println("------------------------------------------------------------------");
 		System.out.println("");
@@ -72,22 +71,4 @@ public class Main
 
 	}
 
-	private static void getResourcesPath()
-	{
-		String className = Main.class.getName().replace('.', '/');
-		String classJar = Main.class.getResource("/" + className + ".class").toString();
-		String path = "";
-
-		String[] split = classJar.split("/");
-		for(int i = 1; i < split.length; i++)
-		{
-			path += split[i] + "/";
-			if(Objects.equals(split[i], "FemidaProject")) break;
-		}
-		if(path.startsWith("home"))
-		{
-			path = "/" + path;
-		}
-		Config.resourcesPath = path + "Resources/";
-	}
 }

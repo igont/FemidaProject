@@ -1,10 +1,7 @@
 # Default ignored files
 /shelf/
 .idea/workspace.xml
-Resources/saved_data.txt
-Resources/test_log.json
-Resources/verification.json
-Resources/config.json
-Resources/test.txt
+Resources/
+!Resources/test_demo.txt
 src/main/resources/Рейтинг судей по Абсолютно реальному бою.xlsx
 out/

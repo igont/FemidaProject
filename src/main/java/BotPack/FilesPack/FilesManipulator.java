@@ -4,95 +4,73 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import main.java.BotPack.DataTypes.Connection;
 import main.java.BotPack.DataTypes.UserDataToSave;
+import main.java.BotPack.Processors.Processer;
 import main.java.Config;
+import main.java.Main;
 
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
+import java.io.File;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.*;
 
-import static main.java.BotPack.DataTypes.Connection.getDifferentFilePath;
-import static main.java.BotPack.Processors.Processer.connections;
-
 public class FilesManipulator
 {
-	public static void write(Object msg, Connection.ResourcesFiles file, boolean format, boolean clear)
+	public static List<String> read(Path path)
 	{
-		Gson gson;
-
-		if(format) gson = new GsonBuilder().setPrettyPrinting().create();
-		else gson = new Gson();
-
-		String s = gson.toJson(msg) + "\n";
-		Path path = getDifferentFilePath(file);
-
-		StandardOpenOption openOption;
-		if(clear) openOption = StandardOpenOption.WRITE;
-		else openOption = StandardOpenOption.APPEND;
-
-		try(OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(path.toFile()), StandardCharsets.UTF_8))
-		{
-			writer.write(s);
-		}catch(FileNotFoundException e)
-		{
-			throw new RuntimeException(e);
-		}catch(IOException e)
-		{
-			throw new RuntimeException(e);
-		}
-	}
-
-	public static List<String> read(Connection.ResourcesFiles file)
-	{
-		Path path = getDifferentFilePath(file);
-		List<String> lines;
 		try
 		{
-			lines = Files.readAllLines(path, StandardCharsets.UTF_8);
+			return Files.readAllLines(path, StandardCharsets.UTF_8);
 		}catch(IOException e)
 		{
 			throw new RuntimeException(e);
 		}
-		return lines;
 	}
-
-	public static int loadSavedConnections()
+	public static List<String> read(ResourcesFiles file)
 	{
-		if(connections == null) connections = new ArrayList<>();
-
-		List<String> savedConnections = read(Connection.ResourcesFiles.SAVED_DATA);
-
-		if(connections.isEmpty())
+		try
 		{
-			Gson gson = new Gson();
-			for(String s : savedConnections)
-			{
-				UserDataToSave userDataToSave = gson.fromJson(s, UserDataToSave.class);
-				connections.add(new Connection(userDataToSave.name, userDataToSave.menuStep));
-			}
+			return Files.readAllLines(getFilePath(file), StandardCharsets.UTF_8);
+		}catch(IOException e)
+		{
+			throw new RuntimeException(e);
 		}
-		return savedConnections.size();
 	}
+
+	public static void write(Object msg, ResourcesFiles file, boolean format, boolean clear)
+	{
+		Path path = getFilePath(file);
+		StandardOpenOption openOption = (clear ? StandardOpenOption.WRITE : StandardOpenOption.APPEND);
+
+		Gson gson = (format ? new GsonBuilder().setPrettyPrinting().create() : new Gson());
+		String message = gson.toJson(msg) + "\n";
+
+		try
+		{
+			Files.writeString(Paths.get(path.toUri()), message, openOption);
+		}catch(IOException e)
+		{
+			throw new RuntimeException(e);
+		}
+	}
+
 	public static void readConfig()
 	{
 		Map<String, String> map = new HashMap<>();
 
-		List<String> strings = FilesManipulator.read(Connection.ResourcesFiles.CONFIG);
+		List<String> strings = read(ResourcesFiles.CONFIG);
 		String s = String.join("", strings);
 
 		Gson gson = new GsonBuilder().setLenient().create();
-		map = gson.fromJson(s,map.getClass());
+		map = gson.fromJson(s, map.getClass());
 
 		try
 		{
 			map.get("testName");
-		}
-		catch(NullPointerException e)
+		}catch(NullPointerException e)
 		{
 			System.out.println("Не заданы параметры программы");
 			Scanner in = new Scanner(System.in);
@@ -117,7 +95,7 @@ public class FilesManipulator
 			map.put("competitionsTableName", competitionsTableName);
 			map.put("refereeTableName", refereeTableName);
 
-			FilesManipulator.write(map, Connection.ResourcesFiles.CONFIG,true, false);
+			FilesManipulator.write(map, ResourcesFiles.CONFIG, true, false);
 		}
 		Config.testName = map.get("testName");
 		Config.refereeTableName = map.get("refereeTableName");
@@ -125,5 +103,100 @@ public class FilesManipulator
 		Config.databaseName = map.get("DBName");
 		Config.user = map.get("DBUser");
 		Config.userPass = map.get("userPass");
+	}
+
+	public static Path getFilePath(ResourcesFiles type)
+	{
+		Path dataFilePath;
+		switch(type)
+		{
+			case CONFIG ->
+			{
+				dataFilePath = Path.of(Config.resourcesPath + "config.json");
+			}
+			case SAVED_DATA ->
+			{
+				try
+				{
+					dataFilePath = Path.of(Config.resourcesPath + "User_data/" + Connection.getName() + "_data.json");
+				}catch(NullPointerException ignored)
+				{
+					dataFilePath = Path.of(Config.resourcesPath + "User_data/");
+				}
+			}
+			case TEST_NAME ->
+			{
+				dataFilePath = Path.of(Config.resourcesPath + Config.testName);
+			}
+			case TEST_LOG ->
+			{
+				dataFilePath = Path.of(Config.resourcesPath + "test_log.json");
+			}
+			case VERIFICATION ->
+			{
+				dataFilePath = Path.of(Config.resourcesPath + "verification.json");
+			}
+			default ->
+			{
+				dataFilePath = null;
+			}
+		}
+		if(!Files.exists(dataFilePath))
+		{
+			try
+			{
+				Files.createDirectories(dataFilePath.getParent());
+				Files.createFile(dataFilePath);
+			}catch(IOException e)
+			{
+				throw new RuntimeException(e);
+			}
+		}
+		return dataFilePath;
+	}
+
+	public static int loadSavedConnections()
+	{
+		File dir = new File(FilesManipulator.getFilePath(ResourcesFiles.SAVED_DATA).toUri());
+		if(UserDataToSave.allUserDataToSave == null) UserDataToSave.allUserDataToSave = new ArrayList<>();
+		File[] files = dir.listFiles();
+		for(File file : files)
+		{
+			if(file.isFile())
+			{
+				List<String> userStrings = FilesManipulator.read(file.toPath());
+				Gson gson = new GsonBuilder().setPrettyPrinting().create();
+				UserDataToSave userData = gson.fromJson(String.join("", userStrings), UserDataToSave.class);
+				UserDataToSave.allUserDataToSave.add(userData);
+
+				Processer.addConnection(userData);
+			}
+		}
+
+		return files.length;
+	}
+
+	public static void getResourcesPath()
+	{
+		String className = Main.class.getName().replace('.', '/');
+		String classJar = Main.class.getResource("/" + className + ".class").toString();
+		String path = "";
+
+		String[] split = classJar.split("/");
+		for(int i = 1; i < split.length; i++)
+		{
+			path += split[i] + "/";
+			if(Objects.equals(split[i], "FemidaProject")) break;
+		}
+		if(path.startsWith("home"))
+		{
+			path = "/" + path;
+		}
+		Config.resourcesPath = path + "Resources/";
+	}
+
+	public enum ResourcesFiles
+	{
+		CONFIG, SAVED_DATA, TEST_NAME, TEST_LOG, VERIFICATION
 	}
 }

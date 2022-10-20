@@ -8,7 +8,6 @@ import main.java.BotPack.DataTypes.TestDataToSave;
 import main.java.BotPack.FilesPack.FilesManipulator;
 import main.java.BotPack.Processors.Deleter;
 import main.java.BotPack.Processors.Processer;
-import main.java.BotPack.Senders.Callbacker;
 import main.java.BotPack.Senders.SendBotMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
@@ -136,7 +135,7 @@ public class Test
 		{
 			Question question = new Question();
 
-			List<String> lines = FilesManipulator.read(Connection.ResourcesFiles.TEST_NAME);
+			List<String> lines = FilesManipulator.read(FilesManipulator.ResourcesFiles.TEST_NAME);
 
 			int numRight = 0;
 			String first;
@@ -190,7 +189,7 @@ public class Test
 		EditMessageReplyMarkup editMessageReplyMarkup = new EditMessageReplyMarkup();
 		editMessageReplyMarkup.setReplyMarkup((InlineKeyboardMarkup) message.getReplyMarkup());
 		editMessageReplyMarkup.setMessageId(connection.activeMessages.lastBotQuestionMessage.getMessageId());
-		editMessageReplyMarkup.setChatId(Callbacker.getChatID());
+		editMessageReplyMarkup.setChatId(Connection.getChatID());
 
 		try
 		{
@@ -251,12 +250,12 @@ public class Test
 		data.testTime = testTime;
 		data.questions = questions;
 		data.userAnswers = userAnswers;
-		data.userName = Callbacker.getName();
+		data.userName = Connection.getName();
 		data.date = new Date();
 		data.totalGrade = resultGrade;
 
 		List<TestDataToSave> datas = new ArrayList<>();
-		List<String> strings = FilesManipulator.read(Connection.ResourcesFiles.TEST_LOG);
+		List<String> strings = FilesManipulator.read(FilesManipulator.ResourcesFiles.TEST_LOG);
 		String s = String.join("", strings);
 
 		Gson gson = new GsonBuilder().setLenient().create();
@@ -268,7 +267,7 @@ public class Test
 		}
 		datas.add(data);
 
-		FilesManipulator.write(datas, Connection.ResourcesFiles.TEST_LOG, true, true);
+		FilesManipulator.write(datas, FilesManipulator.ResourcesFiles.TEST_LOG, true, true);
 	}
 
 	public class Question

@@ -5,7 +5,7 @@ import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import static main.java.BotPack.Processors.Processer.cache;
-import static main.java.BotPack.Senders.Callbacker.getChatID;
+import static main.java.BotPack.DataTypes.Connection.getChatID;
 import static main.java.Main.myBot;
 
 

@@ -4,24 +4,61 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import main.java.BotPack.FilesPack.FilesManipulator;
 import main.java.BotPack.Processors.Processer;
-import main.java.BotPack.Senders.Callbacker;
 import main.java.BotPack.Senders.SendBotMessage;
 import main.java.BotPack.TestingPack.Test;
-import main.java.Config;
 import main.java.Excel.RefereeAccount;
 import main.java.Excel.SQLReal;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
+import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 
-import java.io.*;
-import java.nio.file.*;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import static main.java.BotPack.Processors.Processer.cache;
 
 public class Connection
 {
+	public static String getName()
+	{
+		Update update = cache.update;
+		String fromName = "???"; // Получаем Имя пользователя разными способами
+		if(update.hasMessage()) fromName = update.getMessage().getFrom().getUserName();
+		else
+			if(update.hasCallbackQuery()) fromName = update.getCallbackQuery().getFrom().getUserName();
+
+		return fromName;
+	}
+
+	public static String getMessageText()
+	{
+		Update update = cache.update;
+		String fromText = "???"; // Получаем Текст пользователя разными способами
+		if(update.hasMessage()) fromText = update.getMessage().getText();
+		else
+			if(update.hasCallbackQuery()) fromText = update.getCallbackQuery().getMessage().getText();
+
+		fromText = fromText.replaceAll("@ARC_Femida_bot", "");
+
+		return fromText;
+	}
+
+	public static Long getChatID()
+	{
+		Update update = cache.update;
+		Long chatId = -1L; // Получаем ID пользователя разными способами
+		if(update.hasMessage()) chatId = update.getMessage().getChatId();
+		else
+			if(update.hasCallbackQuery()) chatId = update.getCallbackQuery().getMessage().getChatId();
+
+		return chatId;
+	}
+
 	public static class ActiveMessages
 	{
 		public Message lastBotQuestionMessage;      // Сообщение с вопросом и кнопками для ответов
@@ -83,113 +120,65 @@ public class Connection
 		activeMessages = new ActiveMessages();
 	}
 
+	public Connection()
+	{
+
+	}
+
 	public void verification()
 	{
 		Map<String, TgBdRelation> map = new HashMap<>();
 
-		List<String> strings = FilesManipulator.read(ResourcesFiles.VERIFICATION);
-		String s = String.join("", strings);
+		String verificationStrings = String.join("", FilesManipulator.read(FilesManipulator.ResourcesFiles.VERIFICATION));
 
 		Gson gson = new GsonBuilder().setLenient().create();
-		map = gson.fromJson(s,map.getClass());
+		map = gson.fromJson(verificationStrings,map.getClass());
 
-		String s1 = gson.toJson(map.get(Callbacker.getName()));
+		String s1 = gson.toJson(map.get(getName()));
 		tgBdRelation = gson.fromJson(s1, TgBdRelation.class);
 
-		RefereeAccount referee;
+
+		RefereeAccount referee = new RefereeAccount();
 		try
 		{
 			referee = SQLReal.getRefereeByID(tgBdRelation.id);
 		}catch(SQLException e)
 		{
 			throw new RuntimeException(e);
+		}catch(NullPointerException e) // Если пользователя нет в файле Verification
+		{
+			tgBdRelation = new TgBdRelation(-1, TgBdRelation.Position.READER);
 		}
+
+
+		String verificationCallback = "";
+		if(tgBdRelation.id > 0) // Если человек есть в базе Femida
+		{
+			verificationCallback += "Добро пожаловать, " + referee.sName + " " + referee.fName + " " + referee.mName + "\n\n";
+		}
+		else
+		{
+			verificationCallback += "Вашего аккаунта нет в Базе данных.\n\n";
+		}
+
 		switch(tgBdRelation.position)
 		{
 			case READER ->
 			{
-				SendBotMessage.send("У вас есть доступ к просмотру базы Femida");
+				verificationCallback += "У вас есть доступ к просмотру базы Femida";
 			}
 			case EDITOR ->
 			{
-				String s2 = "Добро пожаловать, " + referee.sName + " " + referee.fName + " " + referee.mName;
-				SendBotMessage.send(s2);
-				SendBotMessage.send("У вас есть права на редактирование базы Femida");
+				verificationCallback += "У вас есть права на редактирование базы Femida";
 			}
 		}
+		save();
+		SendBotMessage.send(verificationCallback);
 	}
 
 	public void save()
 	{
-		save(new UserDataToSave(this));
-	}
-
-	public void save(UserDataToSave userData)
-	{
-		Gson gson = new Gson();
-		String s = gson.toJson(userData) + "\n";
-		Path path = getDifferentFilePath(ResourcesFiles.SAVED_DATA);
-
-		try
-		{
-			Files.write(path, s.getBytes(), StandardOpenOption.APPEND);
-		}catch(IOException e)
-		{
-			throw new RuntimeException(e);
-		}
-	}
-
-	public enum ResourcesFiles
-	{
-		CONFIG,
-		SAVED_DATA,
-		TEST_NAME,
-		TEST_LOG,
-		VERIFICATION
-	}
-
-	public static Path getDifferentFilePath(ResourcesFiles type)
-	{
-		Path dataFilePath;
-		switch(type)
-		{
-			case CONFIG ->
-			{
-				dataFilePath = Path.of(Config.resourcesPath + "config.json");
-			}
-			case SAVED_DATA ->
-			{
-				dataFilePath = Path.of(Config.resourcesPath + "saved_data.txt");
-			}
-			case TEST_NAME ->
-			{
-				dataFilePath = Path.of(Config.resourcesPath + Config.testName);
-			}
-			case TEST_LOG ->
-			{
-				dataFilePath = Path.of(Config.resourcesPath + "test_log.json");
-			}
-			case VERIFICATION ->
-			{
-				dataFilePath = Path.of(Config.resourcesPath + "verification.json");
-			}
-			default ->
-			{
-				dataFilePath = null;
-			}
-		}
-		if(!Files.exists(dataFilePath))
-		{
-			try
-			{
-				Files.createDirectories(Path.of(Config.resourcesPath));
-				Files.createFile(dataFilePath);
-			}catch(IOException e)
-			{
-				throw new RuntimeException(e);
-			}
-		}
-		return dataFilePath;
+		FilesManipulator.write(new UserDataToSave(this), FilesManipulator.ResourcesFiles.SAVED_DATA, true, true);
 	}
 
 	public void setMenuStep(Processer.MenuStep step)
@@ -197,7 +186,6 @@ public class Connection
 		if(menuStep == step) return;
 
 		this.menuStep = step;
-		Callbacker.sendNewCallback("Change step", Callbacker.UserMessageLogFormat.NOTHING, Callbacker.LogFormat.LOG_SIMPLE, false);
 	}
 
 	public enum NextMessage

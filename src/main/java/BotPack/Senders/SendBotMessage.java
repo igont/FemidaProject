@@ -1,6 +1,7 @@
 package main.java.BotPack.Senders;
 
 
+import main.java.BotPack.DataTypes.Connection;
 import main.java.BotPack.Processors.SendDifferentMessages;
 import org.telegram.telegrambots.meta.api.methods.ParseMode;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -16,15 +17,13 @@ public class SendBotMessage
 	public String msg;
 	public InlineKeyboardMarkup inlineKeyboardMarkup;
 	public SendDifferentMessages.ActiveMessageType messageType;
-	public Callbacker.UserMessageLogFormat userMessageLogFormat;
-	public Callbacker.LogFormat logFormat;
 
 	public void send()
 	{
 		SendMessage message = new SendMessage();
 		if(!msg.isEmpty()) message.setText(msg);
 		if(!(inlineKeyboardMarkup == null)) message.setReplyMarkup(inlineKeyboardMarkup);
-		message.setChatId(Callbacker.getChatID());
+		message.setChatId(Connection.getChatID());
 		message.setParseMode(ParseMode.MARKDOWN);
 
 		Message result;
@@ -68,10 +67,20 @@ public class SendBotMessage
 	public static void send(String s)
 	{
 		SendMessage message = new SendMessage();
-		message.setChatId(Callbacker.getChatID());
+		message.setChatId(Connection.getChatID());
 		message.setParseMode(ParseMode.MARKDOWN);
 		message.setText(s);
 
+		try
+		{
+			myBot.execute(message);
+		}catch(TelegramApiException e)
+		{
+			throw new RuntimeException(e);
+		}
+	}
+	public static void send(SendMessage message)
+	{
 		try
 		{
 			myBot.execute(message);

@@ -3,15 +3,15 @@ package main.java.BotPack.Processors;
 import main.java.BotPack.Builders.KeyboardBuilder;
 import main.java.BotPack.DataTypes.Connection;
 import main.java.BotPack.Properties;
-import main.java.BotPack.Senders.Callbacker;
-import static main.java.BotPack.Processors.Processer.cache;
-
+import main.java.BotPack.Senders.SendBotMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+
+import static main.java.BotPack.Processors.Processer.cache;
 
 public class SendDifferentMessages
 {
@@ -33,17 +33,17 @@ public class SendDifferentMessages
 		String s;
 		if(cache.connection.femidaID == null)
 		{
-			Callbacker.sendNewCallback("Для редактирования Рейтинговой базы Femida, вам необходимо пройти верификацию /verification", Callbacker.UserMessageLogFormat.USER_MESSAGE_TEXT, Callbacker.LogFormat.ONE_LINE, false);
+			SendBotMessage.send("Для редактирования Рейтинговой базы Femida, вам необходимо пройти верификацию /verification");
 			cache.connection.femidaID = "Неизвестный пользователь";
 		}
 		System.out.println(cache.connection.femidaID);
 		if(Objects.equals(cache.connection.femidaID.split(" ")[0], "Редактор"))
 		{
-			Callbacker.sendNewCallback("Для вашего уровня \"Редактор\" Доступны следующие команды:", Callbacker.UserMessageLogFormat.USER_MESSAGE_TEXT, Callbacker.LogFormat.ONE_LINE, false);
+			SendBotMessage.send("Для вашего уровня \"Редактор\" Доступны следующие команды:");
 
 		}else
 		{
-			Callbacker.sendNewCallback("Для вашего уровня \"Пользователь\" Доступны следующие команды:", Callbacker.UserMessageLogFormat.USER_MESSAGE_TEXT, Callbacker.LogFormat.ONE_LINE, false);
+			SendBotMessage.send("Для вашего уровня \"Пользователь\" Доступны следующие команды:");
 
 		}
 	}
@@ -61,9 +61,9 @@ public class SendDifferentMessages
 		SendMessage message = new SendMessage();
 		message.setReplyMarkup(inlineKeyboardMarkup);
 		message.setText(Properties.get("bot.say.command.testing"));
-		message.setChatId(Callbacker.getChatID());
+		message.setChatId(Connection.getChatID());
 
-		Callbacker.sendNewCallback(message, Callbacker.UserMessageLogFormat.USER_MESSAGE_TEXT, Callbacker.LogFormat.ONE_LINE, false);
+		SendBotMessage.send(message);
 		connection.activeMessages.requestStartTest = connection.activeMessages.lastSentMessage;
 	}
 
@@ -81,11 +81,11 @@ public class SendDifferentMessages
 
 		inlineKeyboardMarkup = keyboardBuilder.addRow(map).getInlineKeyboardMarkup();
 		message.setReplyMarkup(inlineKeyboardMarkup);
-		message.setChatId(Callbacker.getChatID());
+		message.setChatId(Connection.getChatID());
 		System.out.println(Properties.get("bot.say.warning_сancel_started_test"));
 		message.setText(Properties.get("bot.say.warning_сancel_started_test"));
 
-		Callbacker.sendNewCallback(message, Callbacker.UserMessageLogFormat.USER_MESSAGE_TEXT, Callbacker.LogFormat.ONE_LINE, false);
+		SendBotMessage.send(message);
 	}
 	private static void version()
 	{
@@ -114,9 +114,9 @@ public class SendDifferentMessages
 		SendMessage message = new SendMessage();
 		message.setReplyMarkup(inlineKeyboardMarkup);
 		message.setText("Какая версия вас интересует?");
-		message.setChatId(Callbacker.getChatID());
+		message.setChatId(Connection.getChatID());
 
-		Callbacker.sendNewCallback(message, Callbacker.UserMessageLogFormat.USER_MESSAGE_TEXT, Callbacker.LogFormat.ONE_LINE, false);
+		SendBotMessage.send(message);
 
 		cache.connection.menuStep = Processer.MenuStep.CHECKING_VERSION;
 		cache.connection.activeMessages.versionMessage = cache.connection.activeMessages.lastSentMessage;
