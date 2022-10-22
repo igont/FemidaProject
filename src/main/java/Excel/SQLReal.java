@@ -1,6 +1,7 @@
 package main.java.Excel;
 
 import com.google.common.collect.Lists;
+import main.java.BotPack.Senders.LoggerBot;
 import main.java.Config;
 import org.postgresql.util.PSQLException;
 
@@ -116,18 +117,21 @@ public class SQLReal
 		countGrades = Lists.reverse(countGrades);
 		changeCountGrades(countGrades);
 	}
+
 	private static void changeCountGrades(List<Float> countGrades) throws SQLException
 	{
-		for(int i = countGrades.size(); i>0; i--)
+		for(int i = countGrades.size(); i > 0; i--)
 		{
-			changeCountGrade(i,countGrades.get(i-1));
+			changeCountGrade(i, countGrades.get(i - 1));
 		}
 	}
+
 	private static void changeCountGrade(int id, float totalGrade) throws SQLException
 	{
-		String s = "update "+ Config.refereeTableName+" set calc_points = "+totalGrade+" where id = " + id;
+		String s = "update " + Config.refereeTableName + " set calc_points = " + totalGrade + " where id = " + id;
 		ExcelSQLTemp.execute(s);
 	}
+
 	public static float getTotalGradeByID(int id) throws SQLException
 	{
 		String s = "select grades[num[1]] from(select grades, array_positions(participants_ids," + id + ") as num from " + Config.competitionsTableName + ") as uns;";
@@ -200,11 +204,24 @@ public class SQLReal
 
 	public static RefereeAccount getRefereeByID(int id) throws SQLException
 	{
+		LoggerBot.logMethod("getRefereeByID", id);
+
 		PreparedStatement preparedStatement = ExcelSQLTemp.connection.prepareStatement("select * from " + Config.refereeTableName + " where id = ?");
 		preparedStatement.setInt(1, id);
+
 		ResultSet resultSet = preparedStatement.executeQuery();
 		resultSet.next();
 
+		try
+		{
+			resultSet.getString("f_name");
+		}catch(PSQLException e)
+		{
+			LoggerBot.logMethodReturn("getRefereeByID", "Аккаунт не найден");
+			LoggerBot.log("");
+			//e.printStackTrace();
+			return null;
+		}
 		RefereeAccount refereeAccount = new RefereeAccount();
 		refereeAccount.fName = resultSet.getString("f_name");
 		refereeAccount.sName = resultSet.getString("s_name");
@@ -218,12 +235,13 @@ public class SQLReal
 		refereeAccount.clubName = resultSet.getString("club_name");
 		refereeAccount.id = id;
 
+		LoggerBot.logMethodReturn("getRefereeByID", refereeAccount.sName, refereeAccount.fName, refereeAccount.mName);
 		return refereeAccount;
 	}
 
 	public static int getRefereeIDByFullName(String fName, String sName) throws SQLException
 	{
-		PreparedStatement preparedStatement = ExcelSQLTemp.connection.prepareStatement("select * from "+Config.refereeTableName+" where f_name = ? and s_name = ?;");
+		PreparedStatement preparedStatement = ExcelSQLTemp.connection.prepareStatement("select * from " + Config.refereeTableName + " where f_name = ? and s_name = ?;");
 		preparedStatement.setString(1, fName);
 		preparedStatement.setString(2, sName);
 

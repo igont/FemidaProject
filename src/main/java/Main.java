@@ -42,8 +42,6 @@ public class Main
 		System.out.println("");
 
 
-
-
 		/*RefereeAccount refereeAccount = new RefereeAccount();
 		refereeAccount.fName = "Игорь";
 		refereeAccount.sName = "Гонтаренко";

@@ -100,18 +100,15 @@ public class Test
 			s += (i + 1) + ") " + question.answers.get(i) + "\n\n";
 			row.put((i + 1) + "", (i + 1) + "");
 		}
-		//Callbacker.sendNewCallback(s, TEST_MESSAGE);
 
 		KeyboardBuilder keyboardBuilder = new KeyboardBuilder();
 		keyboardBuilder.addRow(row);
 		keyboardBuilder.addRow(Map.ofEntries(Map.entry("Отправить", "SEND_ANSWER")));
 
 		SendBotMessage message = new SendBotMessage();
-		message.msg = s;
-		message.messageType = TEST_MESSAGE;
-		message.inlineKeyboardMarkup = keyboardBuilder.getInlineKeyboardMarkup();
-
-		message.send();
+		message.setText(s);
+		message.setMessageType(TEST_MESSAGE);
+		message.setInlineKeyboardMarkup(keyboardBuilder.getInlineKeyboardMarkup());
 
 		setLastKeyboardMarkup(keyboardBuilder.getInlineKeyboardMarkup());
 	}

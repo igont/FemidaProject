@@ -5,6 +5,7 @@ import main.java.BotPack.DataTypes.Cache;
 import main.java.BotPack.DataTypes.Connection;
 import main.java.BotPack.DataTypes.UserDataToSave;
 import main.java.BotPack.Properties;
+import main.java.BotPack.Senders.LoggerBot;
 import main.java.BotPack.Senders.SendBotMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -41,6 +42,7 @@ public class Processer
 		Connection connection = cache.connection;
 
 		String data = update.getCallbackQuery().getData().toUpperCase();
+		LoggerBot.logMethod("processButton",Connection.getName(),data);
 
 		switch(connection.menuStep)
 		{
@@ -210,6 +212,7 @@ public class Processer
 	public static void processCommand(GlobalCommand command, String[] param)
 	{
 		Connection connection = cache.connection;
+		LoggerBot.logMethod("processCommand",Connection.getName(),command.toString());
 
 		switch(connection.menuStep)
 		{
@@ -300,16 +303,8 @@ public class Processer
 
 	public static void processText(String text)
 	{
-		if(cache.connection.nextMessage != null) switch(cache.connection.nextMessage)
-		{
-			case VERIFICATION_ID ->
-			{
-//				cache.connection.verification(text);
-//				cache.connection.nextMessage = null;
-//				return;
-			}
-		}
 		SendBotMessage.send(Properties.get("bot.replies.to.text.don't_know"));
+		LoggerBot.logMethod("processText",Connection.getName(),text);
 	}
 
 	public static void checkConnections()
@@ -350,14 +345,19 @@ public class Processer
 	public static Connection addConnection(String name, MenuStep menuStep)
 	{
 		Connection connection = new Connection(name, menuStep);
-		connections.add(connection);
+		UserDataToSave data = new UserDataToSave(connection);
+
+		addConnection(data);
+		connection.save();
 
 		return connection;
 	}
+
 	public static Connection addConnection(UserDataToSave data)
 	{
 		Connection connection = data.getConnection();
 		connections.add(connection);
+		LoggerBot.logMethod("addConnection", data.getUserName());
 		return connection;
 	}
 

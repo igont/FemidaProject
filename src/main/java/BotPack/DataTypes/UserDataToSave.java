@@ -18,6 +18,12 @@ public class UserDataToSave
 	}
 	private TgBdRelation tgBdRelation;
 	private String userName;
+
+	public String getUserName()
+	{
+		return userName;
+	}
+
 	private Processer.MenuStep menuStep;
 	private int countMessages;
 
