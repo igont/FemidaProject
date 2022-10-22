@@ -14,11 +14,26 @@ import static main.java.Main.myBot;
 
 public class SendBotMessage
 {
-	public String msg;
-	public InlineKeyboardMarkup inlineKeyboardMarkup;
-	public SendDifferentMessages.ActiveMessageType messageType;
+	private String msg;
+	private InlineKeyboardMarkup inlineKeyboardMarkup;
+	private SendDifferentMessages.ActiveMessageType messageType;
 
-	public void send()
+	public void setText(String msg)
+	{
+		this.msg = msg;
+	}
+
+	public void setInlineKeyboardMarkup(InlineKeyboardMarkup inlineKeyboardMarkup)
+	{
+		this.inlineKeyboardMarkup = inlineKeyboardMarkup;
+	}
+
+	public void setMessageType(SendDifferentMessages.ActiveMessageType messageType)
+	{
+		this.messageType = messageType;
+	}
+
+	public Message sendPreparedMessage()
 	{
 		SendMessage message = new SendMessage();
 		if(!msg.isEmpty()) message.setText(msg);
@@ -27,13 +42,9 @@ public class SendBotMessage
 		message.setParseMode(ParseMode.MARKDOWN);
 
 		Message result;
-		try
-		{
-			result = myBot.execute(message);
-		}catch(TelegramApiException e)
-		{
-			throw new RuntimeException(e);
-		}
+
+		result = send(message);
+		System.out.println(result);
 
 		switch(messageType)
 		{
@@ -62,31 +73,35 @@ public class SendBotMessage
 
 			}
 		}
+		return result;
 	}
 
-	public static void send(String s)
+	public static Message send(String s) // Отправляет текст в чат
 	{
 		SendMessage message = new SendMessage();
 		message.setChatId(Connection.getChatID());
 		message.setParseMode(ParseMode.MARKDOWN);
 		message.setText(s);
 
-		try
-		{
-			myBot.execute(message);
-		}catch(TelegramApiException e)
-		{
-			throw new RuntimeException(e);
-		}
+		return send(message);
 	}
-	public static void send(SendMessage message)
+
+	public static Message send(SendMessage message, SendDifferentMessages.ActiveMessageType...messageType)
 	{
+		Message result;
 		try
 		{
-			myBot.execute(message);
+			result = myBot.execute(message);
+			LoggerBot.logChatMessage(result);
+
 		}catch(TelegramApiException e)
 		{
 			throw new RuntimeException(e);
 		}
+		if(messageType.length>0)
+		{
+
+		}
+		return result;
 	}
 }

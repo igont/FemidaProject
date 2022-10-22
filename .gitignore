@@ -2,6 +2,7 @@
 /shelf/
 .idea/workspace.xml
 Resources/
+target/
 !Resources/test_demo.txt
 src/main/resources/Рейтинг судей по Абсолютно реальному бою.xlsx
 out/

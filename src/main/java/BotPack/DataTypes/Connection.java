@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import main.java.BotPack.FilesPack.FilesManipulator;
 import main.java.BotPack.Processors.Processer;
+import main.java.BotPack.Senders.LoggerBot;
 import main.java.BotPack.Senders.SendBotMessage;
 import main.java.BotPack.TestingPack.Test;
 import main.java.Excel.RefereeAccount;
@@ -122,21 +123,21 @@ public class Connection
 
 	public Connection()
 	{
-
+		activeMessages = new ActiveMessages();
 	}
 
 	public void verification()
 	{
+		LoggerBot.logMethod("verification",getName());
 		Map<String, TgBdRelation> map = new HashMap<>();
 
 		String verificationStrings = String.join("", FilesManipulator.read(FilesManipulator.ResourcesFiles.VERIFICATION));
 
 		Gson gson = new GsonBuilder().setLenient().create();
-		map = gson.fromJson(verificationStrings,map.getClass());
+		map = gson.fromJson(verificationStrings, map.getClass());
 
 		String s1 = gson.toJson(map.get(getName()));
 		tgBdRelation = gson.fromJson(s1, TgBdRelation.class);
-
 
 		RefereeAccount referee = new RefereeAccount();
 		try
@@ -150,6 +151,7 @@ public class Connection
 			tgBdRelation = new TgBdRelation(-1, TgBdRelation.Position.READER);
 		}
 
+		LoggerBot.logMethod("setTgBdRelation",getName(),String.valueOf(tgBdRelation.id),tgBdRelation.position.toString());
 
 		String verificationCallback = "";
 		if(tgBdRelation.id > 0) // Если человек есть в базе Femida
@@ -172,6 +174,7 @@ public class Connection
 				verificationCallback += "У вас есть права на редактирование базы Femida";
 			}
 		}
+		LoggerBot.log("");
 		save();
 		SendBotMessage.send(verificationCallback);
 	}
@@ -181,11 +184,12 @@ public class Connection
 		FilesManipulator.write(new UserDataToSave(this), FilesManipulator.ResourcesFiles.SAVED_DATA, true, true);
 	}
 
-	public void setMenuStep(Processer.MenuStep step)
+	public void setMenuStep(Processer.MenuStep newStep)
 	{
-		if(menuStep == step) return;
-
-		this.menuStep = step;
+		LoggerBot.logMethod("setMenuStep",userName,menuStep.toString(),newStep.toString());
+		if(menuStep == newStep) return;
+		save();
+		this.menuStep = newStep;
 	}
 
 	public enum NextMessage

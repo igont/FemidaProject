@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import main.java.BotPack.DataTypes.Connection;
 import main.java.BotPack.DataTypes.UserDataToSave;
 import main.java.BotPack.Processors.Processer;
+import main.java.BotPack.Senders.LoggerBot;
 import main.java.Config;
 import main.java.Main;
 
@@ -56,9 +57,26 @@ public class FilesManipulator
 			throw new RuntimeException(e);
 		}
 	}
+	public static void write(String msg, ResourcesFiles file, boolean clear)
+	{
+		Path path = getFilePath(file);
+		StandardOpenOption openOption = (clear ? StandardOpenOption.WRITE : StandardOpenOption.APPEND);
+
+		msg += "\n";
+
+		try
+		{
+			Files.writeString(Paths.get(path.toUri()), msg, openOption);
+		}catch(IOException e)
+		{
+			throw new RuntimeException(e);
+		}
+	}
 
 	public static void readConfig()
 	{
+		LoggerBot.log("readConfig()");
+
 		Map<String, String> map = new HashMap<>();
 
 		List<String> strings = read(ResourcesFiles.CONFIG);
@@ -70,8 +88,12 @@ public class FilesManipulator
 		try
 		{
 			map.get("testName");
+			LoggerBot.log("Конфиг найден");
+			LoggerBot.log("Конфиг найден");
 		}catch(NullPointerException e)
 		{
+			LoggerBot.log("Конфиг не найден, собираем данные с консоли:");
+
 			System.out.println("Не заданы параметры программы");
 			Scanner in = new Scanner(System.in);
 			System.out.print("Название файла с тестом: ");
@@ -95,6 +117,13 @@ public class FilesManipulator
 			map.put("competitionsTableName", competitionsTableName);
 			map.put("refereeTableName", refereeTableName);
 
+			LoggerBot.log("testName", testName);
+			LoggerBot.log("DBName", DBName);
+			LoggerBot.log("DBUser", DBUser);
+			LoggerBot.log("userPass", userPass);
+			LoggerBot.log("competitionsTableName", competitionsTableName);
+			LoggerBot.log("refereeTableName", refereeTableName);
+
 			FilesManipulator.write(map, ResourcesFiles.CONFIG, true, false);
 		}
 		Config.testName = map.get("testName");
@@ -103,6 +132,8 @@ public class FilesManipulator
 		Config.databaseName = map.get("DBName");
 		Config.user = map.get("DBUser");
 		Config.userPass = map.get("userPass");
+
+		LoggerBot.log("");
 	}
 
 	public static Path getFilePath(ResourcesFiles type)
@@ -136,6 +167,20 @@ public class FilesManipulator
 			{
 				dataFilePath = Path.of(Config.resourcesPath + "verification.json");
 			}
+			case MESSAGE_LOG ->
+			{
+				try
+				{
+					dataFilePath = Path.of(Config.resourcesPath + "User_messages/" + Connection.getName() + "_messages.txt");
+				}catch(NullPointerException ignored)
+				{
+					dataFilePath = Path.of(Config.resourcesPath + "User_data/");
+				}
+			}
+			case SYSTEM_LOG ->
+			{
+				dataFilePath = Path.of(Config.resourcesPath + "system_log.txt");
+			}
 			default ->
 			{
 				dataFilePath = null;
@@ -157,9 +202,14 @@ public class FilesManipulator
 
 	public static int loadSavedConnections()
 	{
+		LoggerBot.log("loadSavedConnections()");
 		File dir = new File(FilesManipulator.getFilePath(ResourcesFiles.SAVED_DATA).toUri());
+		LoggerBot.log("dir",dir.getPath());
+
 		if(UserDataToSave.allUserDataToSave == null) UserDataToSave.allUserDataToSave = new ArrayList<>();
 		File[] files = dir.listFiles();
+
+		LoggerBot.log("user count", files.length);
 		for(File file : files)
 		{
 			if(file.isFile())
@@ -167,12 +217,13 @@ public class FilesManipulator
 				List<String> userStrings = FilesManipulator.read(file.toPath());
 				Gson gson = new GsonBuilder().setPrettyPrinting().create();
 				UserDataToSave userData = gson.fromJson(String.join("", userStrings), UserDataToSave.class);
+
 				UserDataToSave.allUserDataToSave.add(userData);
 
 				Processer.addConnection(userData);
 			}
 		}
-
+		LoggerBot.log("");
 		return files.length;
 	}
 
@@ -193,10 +244,16 @@ public class FilesManipulator
 			path = "/" + path;
 		}
 		Config.resourcesPath = path + "Resources/";
+
+		LoggerBot.log("\n---------------------------------------------------------------------------------------------------------------------------" + new Date());
+		LoggerBot.log("getResourcesPath()");
+		LoggerBot.log("jar path", classJar);
+		LoggerBot.log("resources path", path);
+		LoggerBot.log("");
 	}
 
 	public enum ResourcesFiles
 	{
-		CONFIG, SAVED_DATA, TEST_NAME, TEST_LOG, VERIFICATION
+		CONFIG, SAVED_DATA, TEST_NAME, TEST_LOG, VERIFICATION, MESSAGE_LOG, SYSTEM_LOG
 	}
 }
