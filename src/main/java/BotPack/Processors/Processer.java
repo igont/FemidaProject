@@ -43,6 +43,7 @@ public class Processer
 
 		String data = update.getCallbackQuery().getData().toUpperCase();
 		LoggerBot.logMethod("processButton",Connection.getName(),data);
+		LoggerBot.log("");
 
 		switch(connection.menuStep)
 		{
@@ -213,6 +214,7 @@ public class Processer
 	{
 		Connection connection = cache.connection;
 		LoggerBot.logMethod("processCommand",Connection.getName(),command.toString());
+		LoggerBot.log("");
 
 		switch(connection.menuStep)
 		{

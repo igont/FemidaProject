@@ -10,7 +10,9 @@ import main.java.Config;
 import main.java.Main;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -44,14 +46,27 @@ public class FilesManipulator
 	public static void write(Object msg, ResourcesFiles file, boolean format, boolean clear)
 	{
 		Path path = getFilePath(file);
-		StandardOpenOption openOption = (clear ? StandardOpenOption.WRITE : StandardOpenOption.APPEND);
+
+		if(clear)
+		{
+			PrintWriter writer = null;
+			try
+			{
+				writer = new PrintWriter(path.toFile());
+				writer.print("");
+				writer.close();
+			}catch(FileNotFoundException e)
+			{
+				throw new RuntimeException(e);
+			}
+		}
 
 		Gson gson = (format ? new GsonBuilder().setPrettyPrinting().create() : new Gson());
 		String message = gson.toJson(msg) + "\n";
 
 		try
 		{
-			Files.writeString(Paths.get(path.toUri()), message, openOption);
+			Files.writeString(Paths.get(path.toUri()), message, StandardOpenOption.APPEND);
 		}catch(IOException e)
 		{
 			throw new RuntimeException(e);
@@ -89,7 +104,7 @@ public class FilesManipulator
 		{
 			map.get("testName");
 			LoggerBot.log("Конфиг найден");
-			LoggerBot.log("Конфиг найден");
+
 		}catch(NullPointerException e)
 		{
 			LoggerBot.log("Конфиг не найден, собираем данные с консоли:");

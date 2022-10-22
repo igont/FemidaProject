@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
+import static main.java.BotPack.Processors.Processer.MenuStep.CHECKING_VERSION;
 import static main.java.BotPack.Processors.Processer.cache;
 
 public class SendDifferentMessages
@@ -118,7 +119,7 @@ public class SendDifferentMessages
 
 		SendBotMessage.send(message);
 
-		cache.connection.menuStep = Processer.MenuStep.CHECKING_VERSION;
+		cache.connection.setMenuStep(CHECKING_VERSION);
 		cache.connection.activeMessages.versionMessage = cache.connection.activeMessages.lastSentMessage;
 	}
 

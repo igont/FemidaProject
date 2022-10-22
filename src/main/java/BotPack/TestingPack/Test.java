@@ -8,6 +8,7 @@ import main.java.BotPack.DataTypes.TestDataToSave;
 import main.java.BotPack.FilesPack.FilesManipulator;
 import main.java.BotPack.Processors.Deleter;
 import main.java.BotPack.Processors.Processer;
+import main.java.BotPack.Senders.LoggerBot;
 import main.java.BotPack.Senders.SendBotMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
@@ -49,6 +50,7 @@ public class Test
 
 	public void startTest()
 	{
+		LoggerBot.logMethod("startTest", Connection.getName());
 		clearTestData();
 		readAllQuestions();
 		shuffleQuestions();
@@ -57,6 +59,8 @@ public class Test
 
 		Calendar calendar = new GregorianCalendar();
 		startTime = calendar.get(Calendar.SECOND) + calendar.get(Calendar.MINUTE) * 60 + calendar.get(Calendar.HOUR_OF_DAY) * 60 * 60;
+		LoggerBot.log("Время засечено", startTime);
+		LoggerBot.log("");
 
 		sendNextQuestion();
 	}
@@ -92,6 +96,8 @@ public class Test
 			finnishTest();
 			return;
 		}
+		LoggerBot.logMethod("sendQuestion", Connection.getName());
+
 		Question question = questions.get(currentQuestionNumber);
 		String s = "*" + "[" + (questions.size() - currentQuestionNumber) + "] " + question.question + "\n\n*";
 		Map<String, String> row = new HashMap<>();
@@ -111,6 +117,7 @@ public class Test
 		message.setInlineKeyboardMarkup(keyboardBuilder.getInlineKeyboardMarkup());
 
 		setLastKeyboardMarkup(keyboardBuilder.getInlineKeyboardMarkup());
+		message.sendPreparedMessage();
 	}
 
 	private void clearTestData() // Очищаем данные после предыдущего теста
@@ -124,6 +131,7 @@ public class Test
 		userAnswers = null;
 		questions = new ArrayList<>();
 		lastKeyboardMarkup = new InlineKeyboardMarkup();
+		LoggerBot.log("Данные от прошлых тестов очищены");
 	}
 
 	private void readAllQuestions() // Заполняем массив вопросов нужными данными
@@ -171,6 +179,7 @@ public class Test
 				}
 			}
 		}
+		LoggerBot.logMethodReturn("readAllQuestions", String.valueOf(questions.size()));
 	}
 
 	public void editButtons()
@@ -200,6 +209,7 @@ public class Test
 	private void shuffleQuestions()
 	{
 		Collections.shuffle(questions);
+		LoggerBot.log("Вопросы перемешаны");
 	}
 
 	private void shuffleAnswers()
@@ -225,10 +235,13 @@ public class Test
 			}
 			question.answers = newAnswers;
 		}
+		LoggerBot.log("Ответы перемешаны");
 	}
 
 	private void finnishTest()
 	{
+		LoggerBot.logMethod("finnishTest", Connection.getName());
+
 		Calendar calendar = new GregorianCalendar();
 		endTime = calendar.get(Calendar.SECOND) + calendar.get(Calendar.MINUTE) * 60 + calendar.get(Calendar.HOUR_OF_DAY) * 60 * 60;
 

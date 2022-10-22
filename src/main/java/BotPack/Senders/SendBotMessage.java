@@ -92,6 +92,7 @@ public class SendBotMessage
 		try
 		{
 			result = myBot.execute(message);
+			cache.connection.activeMessages.lastSentMessage = result;
 			LoggerBot.logChatMessage(result);
 
 		}catch(TelegramApiException e)

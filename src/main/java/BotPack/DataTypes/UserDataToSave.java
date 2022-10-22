@@ -30,11 +30,9 @@ public class UserDataToSave
 	public static List<UserDataToSave> allUserDataToSave; // Та инфа, которую мы прочитали с файла
 	public Connection getConnection()
 	{
-		Connection connection = new Connection();
+		Connection connection = new Connection(userName, menuStep);
 
 		connection.tgBdRelation = tgBdRelation;
-		connection.userName = userName;
-		connection.menuStep = menuStep;
 		connection.countMessages = countMessages;
 
 		return connection;

@@ -187,9 +187,11 @@ public class Connection
 	public void setMenuStep(Processer.MenuStep newStep)
 	{
 		LoggerBot.logMethod("setMenuStep",userName,menuStep.toString(),newStep.toString());
+		LoggerBot.log("");
+
 		if(menuStep == newStep) return;
-		save();
 		this.menuStep = newStep;
+		save();
 	}
 
 	public enum NextMessage
