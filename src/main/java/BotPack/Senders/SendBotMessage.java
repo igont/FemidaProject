@@ -44,8 +44,6 @@ public class SendBotMessage
 		Message result;
 
 		result = send(message);
-		System.out.println(result);
-
 		switch(messageType)
 		{
 			case REQUEST_START_TEST_MESSAGE ->
@@ -92,6 +90,7 @@ public class SendBotMessage
 		try
 		{
 			result = myBot.execute(message);
+			cache.connection.activeMessages.lastSentMessage = result;
 			LoggerBot.logChatMessage(result);
 
 		}catch(TelegramApiException e)

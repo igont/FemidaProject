@@ -1,5 +1,7 @@
 package main.java.Excel;
 
+import main.java.Excel.SQLPack.SQLExcel;
+
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -24,7 +26,7 @@ public class Competition // Полное описание соревновани
 		return s.replaceAll("[\s]+", " ");
 	}
 
-	Competition()
+	public Competition()
 	{
 		participantFName = "???";
 		participantSName = "???";
@@ -56,7 +58,7 @@ public class Competition // Полное описание соревновани
 
 	public void printHead()
 	{
-		System.out.printf(ExcelSQLTemp.DELIMETR);
+		System.out.printf(SQLExcel.DELIMETR);
 		System.out.printf("| %-25s", "Участник");
 		System.out.printf("| %-15s", "Дата");
 		System.out.printf("| %-35s", "Город");
@@ -64,7 +66,7 @@ public class Competition // Полное описание соревновани
 		System.out.printf("| %-25s", "Должность");
 		System.out.printf("| %-10s", "Очки");
 		System.out.printf("| %-5s |\n", "Ковер");
-		System.out.printf(ExcelSQLTemp.DELIMETR);
+		System.out.printf(SQLExcel.DELIMETR);
 	}
 
 	public void setParticipantFName(String s)

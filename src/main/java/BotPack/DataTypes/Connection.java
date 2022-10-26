@@ -8,7 +8,7 @@ import main.java.BotPack.Senders.LoggerBot;
 import main.java.BotPack.Senders.SendBotMessage;
 import main.java.BotPack.TestingPack.Test;
 import main.java.Excel.RefereeAccount;
-import main.java.Excel.SQLReal;
+import main.java.Excel.SQLPack.SQLReal;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -16,10 +16,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static main.java.BotPack.Processors.Processer.cache;
 
@@ -128,7 +125,7 @@ public class Connection
 
 	public void verification()
 	{
-		LoggerBot.logMethod("verification",getName());
+		LoggerBot.logMethod("verification", getName());
 		Map<String, TgBdRelation> map = new HashMap<>();
 
 		String verificationStrings = String.join("", FilesManipulator.read(FilesManipulator.ResourcesFiles.VERIFICATION));
@@ -136,8 +133,46 @@ public class Connection
 		Gson gson = new GsonBuilder().setLenient().create();
 		map = gson.fromJson(verificationStrings, map.getClass());
 
-		String s1 = gson.toJson(map.get(getName()));
-		tgBdRelation = gson.fromJson(s1, TgBdRelation.class);
+		if(map == null) // если в файле ничего нет
+		{
+			tgBdRelation = new TgBdRelation(-1, TgBdRelation.Position.READER);
+			System.out.println();
+			System.out.println("Необходимо заполнить файл с верификацией пользователей!!!");
+			System.out.println("Иначе никто в телеграмм боте не будет обладать правами админа");
+			System.out.print("Сделать это сейчас? (y/n) ");
+			Scanner in = new Scanner(System.in);
+
+			if(in.nextLine().equalsIgnoreCase("y"))
+			{
+				System.out.println();
+				System.out.println("Для выхода нажмите Q");
+				System.out.println("Введите имя аккаунта пользователя ТГ, который может вносить правки в Базу (например EgOnt)");
+				System.out.println("А затем ID этого человека в базе данных Femida");
+				System.out.println("");
+				System.out.println("Для вызова этого диалога еще раз удалите файл: " + FilesManipulator.getFilePath(FilesManipulator.ResourcesFiles.VERIFICATION));
+				System.out.println();
+				String s;
+				map = new HashMap<>();
+
+
+				System.out.print("Имя: ");
+				String name = in.nextLine();
+
+				System.out.print("id (например 21) (по умолчанию id = -1): ");
+				int id = in.nextInt();
+
+				map.put(name, new TgBdRelation(id, TgBdRelation.Position.EDITOR));
+				FilesManipulator.write(map, FilesManipulator.ResourcesFiles.VERIFICATION, true, true);
+				System.out.println("Сохранено: " + name + ": " + gson.toJson(map.get(name)));
+				System.out.println("Остальное сам вбей в вышеуказанном файле");
+			}
+		}
+		else
+		{
+			String s1 = gson.toJson(map.get(getName()));
+			tgBdRelation = gson.fromJson(s1, TgBdRelation.class);
+		}
+
 
 		RefereeAccount referee = new RefereeAccount();
 		try
@@ -151,7 +186,7 @@ public class Connection
 			tgBdRelation = new TgBdRelation(-1, TgBdRelation.Position.READER);
 		}
 
-		LoggerBot.logMethod("setTgBdRelation",getName(),String.valueOf(tgBdRelation.id),tgBdRelation.position.toString());
+		LoggerBot.logMethod("setTgBdRelation", getName(), String.valueOf(tgBdRelation.id), tgBdRelation.position.toString());
 
 		String verificationCallback = "";
 		if(tgBdRelation.id > 0) // Если человек есть в базе Femida
@@ -186,10 +221,12 @@ public class Connection
 
 	public void setMenuStep(Processer.MenuStep newStep)
 	{
-		LoggerBot.logMethod("setMenuStep",userName,menuStep.toString(),newStep.toString());
+		LoggerBot.logMethod("setMenuStep", userName, menuStep.toString(), newStep.toString());
+		LoggerBot.log("");
+
 		if(menuStep == newStep) return;
-		save();
 		this.menuStep = newStep;
+		save();
 	}
 
 	public enum NextMessage
