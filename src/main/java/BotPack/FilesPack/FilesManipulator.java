@@ -131,6 +131,8 @@ public class FilesManipulator
 			String competitionsTableName = in.nextLine();
 			System.out.print("Название таблицы для сохранения аккаунтов судей: ");
 			String refereeTableName = in.nextLine();
+			System.out.print("Название книги Excel: ");
+			String excelFileName = in.nextLine();
 
 			map = new HashMap<>();
 			map.put("testName", testName);
@@ -139,6 +141,7 @@ public class FilesManipulator
 			map.put("userPass", userPass);
 			map.put("competitionsTableName", competitionsTableName);
 			map.put("refereeTableName", refereeTableName);
+			map.put("excelFileName", excelFileName);
 
 			LoggerBot.log("testName", testName);
 			LoggerBot.log("DBName", DBName);
@@ -146,6 +149,7 @@ public class FilesManipulator
 			LoggerBot.log("userPass", userPass);
 			LoggerBot.log("competitionsTableName", competitionsTableName);
 			LoggerBot.log("refereeTableName", refereeTableName);
+			LoggerBot.log("excelFileName", excelFileName);
 
 			FilesManipulator.write(map, ResourcesFiles.CONFIG, true, false);
 		}
@@ -339,6 +343,13 @@ public class FilesManipulator
 
 	public enum ResourcesFiles
 	{
-		CONFIG, SAVED_DATA, TEST_NAME, TEST_LOG, VERIFICATION, MESSAGE_LOG, SYSTEM_LOG, FEMIDA_EXCEL
+		CONFIG,
+		SAVED_DATA,
+		TEST_NAME,
+		TEST_LOG,
+		VERIFICATION,
+		MESSAGE_LOG,
+		SYSTEM_LOG,
+		FEMIDA_EXCEL
 	}
 }

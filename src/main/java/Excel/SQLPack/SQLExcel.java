@@ -1,18 +1,24 @@
 package main.java.Excel.SQLPack;
 
+import main.java.BotPack.FilesPack.FilesManipulator;
 import main.java.BotPack.Senders.LoggerBot;
 import main.java.Config;
-import main.java.Excel.*;
+import main.java.Excel.Competition;
+import main.java.Excel.GlobalCompetition;
+import main.java.Excel.Participant;
+import main.java.Excel.RefereeAccount;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.sql.*;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.*;
 
 public class SQLExcel // Функции для связи SQL и EXCEL
@@ -43,15 +49,20 @@ public class SQLExcel // Функции для связи SQL и EXCEL
 	}
 	public static List<RefereeAccount> readParticipants() throws IOException, SQLException // Читаем все данные о судьях в файле
 	{
-		//SQLMain.connect(Config.databaseName, Config.user, Config.userPass);
 
 		List<RefereeAccount> refereeAccounts = new ArrayList<>(); // Тот массив, который будем возвращать
 
-		ClassLoader classloader = Thread.currentThread().getContextClassLoader();
-		InputStream fis = classloader.getResourceAsStream(Config.excelFileName); // Читаем файл
+		File excelFile = new File(FilesManipulator.getFilePath(FilesManipulator.ResourcesFiles.FEMIDA_EXCEL).toUri());
+		InputStream excelInputStream = new FileInputStream(excelFile);
 
-		XSSFWorkbook wb = new XSSFWorkbook(fis); // Записываем книгу в переменную
-		XSSFSheet mySheet; // Объявляем лист
+
+
+
+		//ClassLoader classloader = Thread.currentThread().getContextClassLoader();
+		//InputStream excelInputStream = classloader.getResourceAsStream(Config.excelFileName); // Читаем файл
+
+		XSSFWorkbook wb = new XSSFWorkbook(excelInputStream); // Книга с базой данных
+		XSSFSheet mySheet; // Лист книги
 
 		for(int sheet = 3; sheet < wb.getNumberOfSheets(); sheet++) // Проходим по всем листам книги
 		{
