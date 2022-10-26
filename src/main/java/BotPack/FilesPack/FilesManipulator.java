@@ -32,6 +32,7 @@ public class FilesManipulator
 			throw new RuntimeException(e);
 		}
 	}
+
 	public static List<String> read(ResourcesFiles file)
 	{
 		try
@@ -47,9 +48,15 @@ public class FilesManipulator
 	{
 		Path path = getFilePath(file);
 
+		if(!Files.exists(path))
+		{
+			clear = true;
+			LoggerBot.log("Создал файл: [" + path + "]");
+			LoggerBot.log("");
+		}
 		if(clear)
 		{
-			PrintWriter writer = null;
+			PrintWriter writer;
 			try
 			{
 				writer = new PrintWriter(path.toFile());
@@ -72,6 +79,7 @@ public class FilesManipulator
 			throw new RuntimeException(e);
 		}
 	}
+
 	public static void write(String msg, ResourcesFiles file, boolean clear)
 	{
 		Path path = getFilePath(file);
@@ -147,13 +155,14 @@ public class FilesManipulator
 		Config.databaseName = map.get("DBName");
 		Config.user = map.get("DBUser");
 		Config.userPass = map.get("userPass");
+		Config.excelFileName = map.get("excelFileName");
 
 		LoggerBot.log("");
 	}
 
 	public static Path getFilePath(ResourcesFiles type)
 	{
-		Path dataFilePath;
+		Path dataFilePath = null;
 		switch(type)
 		{
 			case CONFIG ->
@@ -168,6 +177,7 @@ public class FilesManipulator
 				}catch(NullPointerException ignored)
 				{
 					dataFilePath = Path.of(Config.resourcesPath + "User_data/");
+					createDirectory(dataFilePath);
 				}
 			}
 			case TEST_NAME ->
@@ -187,44 +197,67 @@ public class FilesManipulator
 				try
 				{
 					dataFilePath = Path.of(Config.resourcesPath + "User_messages/" + Connection.getName() + "_messages.txt");
+					if(!Files.exists(dataFilePath.getParent()))
+						createDirectory(dataFilePath.getParent());
+
 				}catch(NullPointerException ignored)
 				{
-					dataFilePath = Path.of(Config.resourcesPath + "User_data/");
+					dataFilePath = Path.of(Config.resourcesPath + "User_messages/");
+					createDirectory(dataFilePath);
 				}
 			}
 			case SYSTEM_LOG ->
 			{
 				dataFilePath = Path.of(Config.resourcesPath + "system_log.txt");
 			}
+
+			case FEMIDA_EXCEL ->
+			{
+				dataFilePath = Path.of(Config.resourcesPath + "Femida.xlsx");
+			}
 			default ->
 			{
 				dataFilePath = null;
 			}
 		}
+
+		if(dataFilePath == null) return null;
+
 		if(!Files.exists(dataFilePath))
 		{
-			try
-			{
-				Files.createDirectories(dataFilePath.getParent());
-				Files.createFile(dataFilePath);
-			}catch(IOException e)
-			{
-				throw new RuntimeException(e);
-			}
+			createFile(dataFilePath);
 		}
 		return dataFilePath;
 	}
 
-	public static int loadSavedConnections()
+	public static String loadSavedConnections()
 	{
 		LoggerBot.log("loadSavedConnections()");
-		File dir = new File(FilesManipulator.getFilePath(ResourcesFiles.SAVED_DATA).toUri());
-		LoggerBot.log("dir",dir.getPath());
+		Path filePath = FilesManipulator.getFilePath(ResourcesFiles.SAVED_DATA);
+
+		if(filePath == null)
+		{
+			LoggerBot.log("Directory not exist");
+			return "Directory not exist";
+		}
+		LoggerBot.log("Directory",filePath);
+
+		File dir = new File(filePath.toUri());
 
 		if(UserDataToSave.allUserDataToSave == null) UserDataToSave.allUserDataToSave = new ArrayList<>();
 		File[] files = dir.listFiles();
 
-		LoggerBot.log("user count", files.length);
+		if(files != null)
+		{
+			LoggerBot.log("user count", files.length);
+		}
+		else
+		{
+			LoggerBot.log("user count", 0);
+			LoggerBot.log("");
+			return "Directory empty";
+		}
+
 		for(File file : files)
 		{
 			if(file.isFile())
@@ -239,10 +272,10 @@ public class FilesManipulator
 			}
 		}
 		LoggerBot.log("");
-		return files.length;
+		return String.valueOf(files.length);
 	}
 
-	public static void getResourcesPath()
+	public static String getResourcesPath()
 	{
 		String className = Main.class.getName().replace('.', '/');
 		String classJar = Main.class.getResource("/" + className + ".class").toString();
@@ -263,12 +296,49 @@ public class FilesManipulator
 		LoggerBot.log("\n---------------------------------------------------------------------------------------------------------------------------" + new Date());
 		LoggerBot.log("getResourcesPath()");
 		LoggerBot.log("jar path", classJar);
-		LoggerBot.log("resources path", path);
+		LoggerBot.log("resources path", Config.resourcesPath);
 		LoggerBot.log("");
+
+		return Config.resourcesPath;
+	}
+	private static void createDirectory(Path path)
+	{
+		try
+		{
+			Path created_directories = Files.createDirectories(path);
+			LoggerBot.log("Создал директорию: [" + created_directories + "]");
+			LoggerBot.log("");
+
+		}catch(IOException e)
+		{
+			LoggerBot.log("Директория не создалась: [" + path + "]");
+			LoggerBot.log("");
+
+			throw new RuntimeException(e);
+		}
+	}
+	private static void createFile(Path path)
+	{
+		PrintWriter writer;
+		try
+		{
+			writer = new PrintWriter(path.toFile());
+			writer.print("");
+			writer.close();
+
+			LoggerBot.log("Создал файл: [" + path + "]");
+			LoggerBot.log("");
+
+		}catch(FileNotFoundException e)
+		{
+			LoggerBot.log("Файл не создался: [" + path + "]");
+			LoggerBot.log("");
+			throw new RuntimeException(e);
+		}
 	}
 
 	public enum ResourcesFiles
 	{
-		CONFIG, SAVED_DATA, TEST_NAME, TEST_LOG, VERIFICATION, MESSAGE_LOG, SYSTEM_LOG
+		CONFIG, SAVED_DATA, TEST_NAME, TEST_LOG, VERIFICATION, MESSAGE_LOG, SYSTEM_LOG, FEMIDA_EXCEL
 	}
 }

@@ -1,5 +1,7 @@
 package main.java.Excel;
 
+import main.java.Excel.SQLPack.SQLReal;
+
 import java.sql.SQLException;
 
 public class Participant // Результаты судьи за определенное соревнование
@@ -39,7 +41,7 @@ public class Participant // Результаты судьи за определ�
 	}
 
 
-	int id;
+	public int id;
 	public String fName;
 	public String sName;
 	public String mName;

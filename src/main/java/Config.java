@@ -9,4 +9,5 @@ public class Config
 	public static String databaseName;
 	public static String user;
 	public static String userPass;
+	public static String excelFileName;
 }

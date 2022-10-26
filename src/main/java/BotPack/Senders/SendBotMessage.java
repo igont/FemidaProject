@@ -44,8 +44,6 @@ public class SendBotMessage
 		Message result;
 
 		result = send(message);
-		System.out.println(result);
-
 		switch(messageType)
 		{
 			case REQUEST_START_TEST_MESSAGE ->

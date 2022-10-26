@@ -2,15 +2,12 @@ package main.java;
 
 import main.java.BotPack.FilesPack.FilesManipulator;
 import main.java.BotPack.MainPack.MyBot;
-import main.java.Excel.ExcelSQLTemp;
+import main.java.Excel.SQLPack.SQLMain;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
-
-import java.io.IOException;
-import java.sql.SQLException;
 
 import static main.java.BotPack.FilesPack.FilesManipulator.readConfig;
 
@@ -19,27 +16,10 @@ public class Main
 {
 	public static final MyBot myBot = new MyBot();
 
-	public static void main(String[] args) throws TelegramApiException, IOException, SQLException
+	public static void main(String[] args)
 	{
+		firstStart();
 
-		Logger logger = LoggerFactory.getLogger(Main.class);
-		System.out.println("Starting Femida Project...");
-		System.out.println("------------------------------------------------------------------");
-
-		FilesManipulator.getResourcesPath(); // Получаем путь до файла с ресурсами
-		readConfig(); // Читаем переменные из файла
-
-		TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
-		botsApi.registerBot(myBot);
-		System.out.println("Telegram bot:           Connected");
-
-		//-------------------------------------------------------------------------------------------------------------------------
-		ExcelSQLTemp.connect();
-		System.out.println("PostgreSQL:             Connected");
-		System.out.println("Resources path:         " + Config.resourcesPath);
-		System.out.println("Connections loaded:     " + FilesManipulator.loadSavedConnections());
-		System.out.println("------------------------------------------------------------------");
-		System.out.println("");
 
 
 		/*RefereeAccount refereeAccount = new RefereeAccount();
@@ -69,4 +49,29 @@ public class Main
 
 	}
 
+	public static void firstStart()
+	{
+		Logger logger = LoggerFactory.getLogger(Main.class); // Подключаем херню для логов каких-то
+
+		System.out.println("Starting Femida Project...");
+		System.out.println("------------------------------------------------------------------");
+		System.out.println("Resources path:         " + FilesManipulator.getResourcesPath());       // Получаем путь до файла с ресурсами
+		readConfig(); // Читаем переменные из файла
+
+		try
+		{
+			TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
+			botsApi.registerBot(myBot);
+			System.out.println("Telegram bot:           " +"Connected");
+		}catch(TelegramApiException e)
+		{
+			System.out.println("Telegram bot:           " +"Error");
+			throw new RuntimeException(e);
+		}
+
+		System.out.println("PostgreSQL:             " + SQLMain.connect(Config.databaseName, Config.user, Config.userPass));    // Подключаемся к базе данных Postgres
+		System.out.println("Connections loaded:     " + FilesManipulator.loadSavedConnections());                               // Загружаем аккаунты пользователей, сохраненные с прошлых сессий
+		System.out.println("------------------------------------------------------------------");
+		System.out.println("");
+	}
 }

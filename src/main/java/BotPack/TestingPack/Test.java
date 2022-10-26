@@ -81,10 +81,10 @@ public class Test
 			addGrade = questions.get(currentQuestionNumber).answers.size() - 1;
 		}
 		grade += addGrade;
-		System.out.println("Выбрано: " + lastSelectedAnswer);
-		System.out.println("Правильный : " + questions.get(currentQuestionNumber).right);
-		System.out.println("Начислено баллов : " + addGrade + " из " + (questions.get(currentQuestionNumber).answers.size() - 1));
-		System.out.println();
+//		System.out.println("Выбрано: " + lastSelectedAnswer);
+//		System.out.println("Правильный : " + questions.get(currentQuestionNumber).right);
+//		System.out.println("Начислено баллов : " + addGrade + " из " + (questions.get(currentQuestionNumber).answers.size() - 1));
+//		System.out.println();
 		currentQuestionNumber++;
 		sendNextQuestion();
 	}

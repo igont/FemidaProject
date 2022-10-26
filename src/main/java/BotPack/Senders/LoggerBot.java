@@ -5,7 +5,6 @@ import main.java.BotPack.FilesPack.FilesManipulator;
 import main.java.BotPack.Processors.Processer;
 import org.telegram.telegrambots.meta.api.objects.Message;
 
-import java.util.Arrays;
 import java.util.Date;
 
 public class LoggerBot
@@ -23,9 +22,9 @@ public class LoggerBot
 
 		FilesManipulator.write(messageDataToSave, FilesManipulator.ResourcesFiles.MESSAGE_LOG, true, false);
 	}
-	public static void log(String var, String val)
+	public static void log(String var, Object val)
 	{
-		String s = var + " = [" + val + "]";
+		String s = var + " = [" + val.toString() + "]";
 		FilesManipulator.write(s, FilesManipulator.ResourcesFiles.SYSTEM_LOG,false);
 	}
 	public static void log(String var, int val)
@@ -37,29 +36,22 @@ public class LoggerBot
 	{
 		FilesManipulator.write(s, FilesManipulator.ResourcesFiles.SYSTEM_LOG,false);
 	}
-	public static void logMethod(String method, int...variables)
-	{
-		String s = Arrays.toString(variables);
-		String[] strings = s.substring(1,s.length()-1).split(", ");
-
-		logMethod(method, strings);
-	}
-	public static void logMethod(String method, String...variables)
+	public static void logMethod(String method, Object...variables)
 	{
 		String s = method + "() <--";
-		for(String var: variables)
+		for(Object var: variables)
 		{
-			s += String.format(" [%s],",var);
+			s += String.format(" [%s],",var.toString());
 		}
 		s = s.substring(0, s.length() - 1);
 		FilesManipulator.write(s, FilesManipulator.ResourcesFiles.SYSTEM_LOG,false);
 	}
-	public static void logMethodReturn(String method, String...variables)
+	public static void logMethodReturn(String method, Object...variables)
 	{
 		String s = method + "() -->";
-		for(String var: variables)
+		for(Object var: variables)
 		{
-			s += String.format(" [%s],",var);
+			s += String.format(" [%s],",var.toString());
 		}
 		s = s.substring(0, s.length() - 1);
 		FilesManipulator.write(s, FilesManipulator.ResourcesFiles.SYSTEM_LOG,false);
