@@ -95,7 +95,6 @@ public class SQLMain
 		}catch(SQLException e)
 		{
 			LoggerBot.logMethodReturn("Drop Table", Config.competitionsTableName, false);
-			throw new RuntimeException(e);
 		}
 
 		try

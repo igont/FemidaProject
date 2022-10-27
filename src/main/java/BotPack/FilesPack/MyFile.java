@@ -88,6 +88,8 @@ public class MyFile
 
 	public void write(Object msg)
 	{
+		clear();
+
 		if(msg.getClass() == String.class) write(msg.toString());
 		else writeOrAppend(msg, StandardOpenOption.WRITE);
 	}
@@ -244,6 +246,10 @@ public class MyFile
 	public Path getPath()
 	{
 		return path;
+	}
+	public File getFile()
+	{
+		return new File(path.toUri());
 	}
 	public Path getDirectory()
 	{

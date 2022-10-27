@@ -11,7 +11,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-import static main.java.BotPack.Processors.Processer.MenuStep.CHECKING_VERSION;
 import static main.java.BotPack.Processors.Processer.cache;
 
 public class SendDifferentMessages
@@ -25,7 +24,6 @@ public class SendDifferentMessages
 			case REQUEST_START_TEST_MESSAGE -> requestStartTest();
 			case TEST_MESSAGE -> cache.connection.test.startTest();
 			case REQUEST_CANCEL_TEST_MESSAGE -> cancelTest();
-			case VERSION_MESSAGE -> version();
 			case FEMIDA_ACTIONS -> femidaActions();
 		}
 	}
@@ -88,47 +86,13 @@ public class SendDifferentMessages
 
 		SendBotMessage.send(message);
 	}
-	private static void version()
-	{
-		KeyboardBuilder keyboardBuilder = new KeyboardBuilder();
 
-		InlineKeyboardMarkup inlineKeyboardMarkup;
-		Map<String, String> map = new HashMap<>(); // Первый ряд кнопок
-		map.put("0.3", "0.3");
-		map.put("0.2", "0.2");
-		map.put("0.1", "0.1");
-		keyboardBuilder.addRow(map);
-
-		map = new HashMap<>(); // Второй ряд кнопок
-		map.put("0.6", "0.6");
-		map.put("0.5", "0.5");
-		map.put("0.4", "0.4");
-		keyboardBuilder.addRow(map);
-
-		map = new HashMap<>(); // Третий ряд кнопок
-		map.put("Закрыть", "cancel");
-
-		keyboardBuilder.addRow(map);
-
-		inlineKeyboardMarkup = keyboardBuilder.getInlineKeyboardMarkup();
-
-		SendMessage message = new SendMessage();
-		message.setReplyMarkup(inlineKeyboardMarkup);
-		message.setText("Какая версия вас интересует?");
-		message.setChatId(Connection.getChatID());
-
-		SendBotMessage.send(message);
-
-		cache.connection.setMenuStep(CHECKING_VERSION);
-		cache.connection.activeMessages.versionMessage = cache.connection.activeMessages.lastSentMessage;
-	}
 
 	public enum ActiveMessageType
 	{
 		REQUEST_START_TEST_MESSAGE,                 // Запрос на начало теста
 		TEST_MESSAGE,                               // Сообщение в процессе тестирования
 		REQUEST_CANCEL_TEST_MESSAGE,                // Сообщение об отмене тестирования
-		VERSION_MESSAGE,                            // Вывод версии бота с выбором нужной версии через кнопки
 		LAST_SENT_MESSAGE,                           // Последнее присланное сообщение
 		FEMIDA_ACTIONS,
 	}

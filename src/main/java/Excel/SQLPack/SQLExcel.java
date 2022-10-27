@@ -57,7 +57,6 @@ public class SQLExcel // Функции для связи SQL и EXCEL
 
 		InputStream excelInputStream = new FileInputStream(new File(new MyFile(FEMIDA_EXCEL).getPath().toUri()));
 
-
 		XSSFWorkbook wb = new XSSFWorkbook(excelInputStream); // Книга с базой данных
 		XSSFSheet mySheet; // Лист книги
 
@@ -135,6 +134,7 @@ public class SQLExcel // Функции для связи SQL и EXCEL
 			}
 		}
 		LoggerBot.logMethodReturn("readParticipants", refereeAccounts.size());
+		LoggerBot.log("");
 		return refereeAccounts;
 	}
 
@@ -143,10 +143,9 @@ public class SQLExcel // Функции для связи SQL и EXCEL
 		//SQLMain.connect(Config.databaseName, Config.user, Config.userPass);
 		List<Competition> competitions = new ArrayList<>(); // Тот массив, который будем возвращать
 
-		ClassLoader classloader = Thread.currentThread().getContextClassLoader();
-		InputStream fis = classloader.getResourceAsStream(Config.excelFileName); // Читаем файл
+		InputStream excelInputStream = new FileInputStream(new File(new MyFile(FEMIDA_EXCEL).getPath().toUri()));
 
-		XSSFWorkbook wb = new XSSFWorkbook(fis); // Записываем книгу в переменную
+		XSSFWorkbook wb = new XSSFWorkbook(excelInputStream); // Записываем книгу в переменную
 		XSSFSheet mySheet; // Объявляем лист
 		Competition competition;
 
@@ -246,6 +245,7 @@ public class SQLExcel // Функции для связи SQL и EXCEL
 			addRefereeAccount(refereeAccount); // Добавляем весь список
 		}
 		LoggerBot.logMethodReturn("addParticipants", refereeAccounts.size());
+		LoggerBot.log("");
 	}
 
 	public static List<GlobalCompetition> convertCompetitionsToGlobalCompetitions(List<Competition> competitions) throws SQLException
