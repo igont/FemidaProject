@@ -45,15 +45,6 @@ public class Deleter
 					deleteBYID(id);
 				}
 			}
-			case VERSION_MESSAGE ->
-			{
-				if(connection.activeMessages.versionMessage != null) // Если нам есть что удалять
-				{
-					id = connection.activeMessages.versionMessage.getMessageId();
-					connection.activeMessages.versionMessage = null;
-					deleteBYID(id);
-				}
-			}
 			case LAST_SENT_MESSAGE ->
 			{
 				if(connection.activeMessages.lastSentMessage != null) // Если нам есть что удалять

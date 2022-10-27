@@ -197,29 +197,29 @@ public class SQLReal
 			PreparedStatement preparedStatement = SQLMain.connection.prepareStatement("select * from " + Config.refereeTableName + " where id = ?");
 			preparedStatement.setInt(1, id);
 			resultSet = preparedStatement.executeQuery();
-			LoggerBot.logMethodReturn("getRefereeByID",id, "Найден");
+			LoggerBot.logMethodReturn("getRefereeByID", id, "Найден");
 		}catch(PSQLException e)
 		{
-			LoggerBot.logMethodReturn("getRefereeByID",id, "Ошибка");
+			LoggerBot.logMethodReturn("getRefereeByID", id, "Ошибка");
 			e.printStackTrace();
-			System.out.println("Создать таблицу " + Config.refereeTableName+"? (y/n)");
+			System.out.println("Создать таблицу " + Config.refereeTableName + "? (y/n)");
 
 			Scanner in = new Scanner(System.in);
 			if(in.nextLine().equalsIgnoreCase("y"))
 			{
-				LoggerBot.log("В консоли вызвана функция пересоздания таблицы",Config.refereeTableName);
+				LoggerBot.log("В консоли вызвана функция пересоздания таблицы", Config.refereeTableName);
 
 				SQLMain.reCreateTableReferee();
 			}
-			System.out.println("Заполнить таблицу данными из файла " + Config.excelFileName+"? (y/n)");
+			System.out.println("Заполнить таблицу данными из файла " + Config.excelFileName + "? (y/n)");
 
 			if(in.nextLine().equalsIgnoreCase("y"))
 			{
-				LoggerBot.log("В консоли вызвана функция чтения данных их файла для заполнения в базу данных",Config.excelFileName);
+				LoggerBot.log("В консоли вызвана функция чтения данных их файла для заполнения в базу данных", Config.excelFileName);
 				try
 				{
 					List<RefereeAccount> refereeAccounts = SQLExcel.readParticipants();
-					SQLExcel.pullAccountsToTheTable(refereeAccounts,true);
+					SQLExcel.pullAccountsToTheTable(refereeAccounts, true);
 				}catch(IOException ex)
 				{
 					throw new RuntimeException(ex);
@@ -310,5 +310,57 @@ public class SQLReal
 		{
 			throw new RuntimeException(e);
 		}*/
+	}
+
+	public static String getGlobalRating()
+	{
+		ResultSet resultSet;
+		String result = "";
+		try
+		{
+
+			resultSet = SQLExcecuter.executeQuery("Select * from " + Config.refereeTableName + " order by calc_points desc;");
+
+			while(true)
+			{
+				try
+				{
+					if(!resultSet.next()) break;
+				}catch(SQLException e)
+				{
+					throw new RuntimeException(e);
+				}
+				String points = "?";
+				String sName = "?";
+				String fName = "?";
+				String mName = "?";
+
+				points = resultSet.getInt("calc_points") + "";
+				sName = resultSet.getString("s_name");
+
+				try
+				{
+					fName = resultSet.getString("f_name").toUpperCase().charAt(1) + "";
+
+				}catch(StringIndexOutOfBoundsException ignored)
+				{
+				}
+				try
+				{
+					mName = resultSet.getString("m_name").toUpperCase().charAt(1) + "";
+
+				}catch(StringIndexOutOfBoundsException ignored)
+				{
+				}
+
+				String add = String.format("%s: %s %s. %s.\n", points, sName, fName, mName);
+
+				result += add;
+			}
+		}catch(SQLException e)
+		{
+			throw new RuntimeException(e);
+		}
+		return result;
 	}
 }

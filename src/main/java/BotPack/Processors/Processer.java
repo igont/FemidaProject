@@ -5,6 +5,7 @@ import main.java.BotPack.DataTypes.Cache;
 import main.java.BotPack.DataTypes.Connection;
 import main.java.BotPack.DataTypes.TgBdRelation;
 import main.java.BotPack.DataTypes.UserDataToSave;
+import main.java.BotPack.FilesPack.MyFile;
 import main.java.BotPack.Properties;
 import main.java.BotPack.Senders.LoggerBot;
 import main.java.BotPack.Senders.SendBotMessage;
@@ -15,6 +16,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+
+import static main.java.BotPack.FilesPack.FilesManipulator.readConfig;
+import static main.java.BotPack.FilesPack.ResourcesFiles.*;
 
 public class Processer
 {
@@ -43,138 +47,139 @@ public class Processer
 		Connection connection = cache.connection;
 
 		String data = update.getCallbackQuery().getData().toUpperCase();
-		LoggerBot.logMethod("processButton",Connection.getName(),data);
+		LoggerBot.logMethod("processButton", Connection.getName(), data);
 		LoggerBot.log("");
 
 		switch(connection.menuStep)
 		{
 			case MENU ->
 			{
-				switch(data)
-				{
-					case "START_TEST" ->
-					{
-						Deleter.requestForDeletion(SendDifferentMessages.ActiveMessageType.REQUEST_START_TEST_MESSAGE);
-						SendDifferentMessages.send(SendDifferentMessages.ActiveMessageType.TEST_MESSAGE);
-						cache.connection.setMenuStep(MenuStep.PROCESS_TESTING);
-					}
-					case "CANCEL_TEST" ->
-					{
-						Deleter.requestForDeletion(SendDifferentMessages.ActiveMessageType.REQUEST_START_TEST_MESSAGE);
-					}
-				}
+				processButonsFromMenu(data);
+				processPersonalCommands(data);
 			}
 			case PROCESS_TESTING ->
 			{
-				switch(data)
-				{
-					case "CANCEL_STARTED_TEST" ->
-					{
-						Deleter.requestForDeletion(SendDifferentMessages.ActiveMessageType.REQUEST_CANCEL_TEST_MESSAGE);
-						Deleter.requestForDeletion(SendDifferentMessages.ActiveMessageType.TEST_MESSAGE);
-
-						connection.setMenuStep(MenuStep.MENU);
-
-						SendBotMessage.send("Тест прерван");
-
-					}
-					case "CONTINUE" ->
-					{
-						Deleter.requestForDeletion(SendDifferentMessages.ActiveMessageType.REQUEST_CANCEL_TEST_MESSAGE);
-					}
-					case "1", "2", "3", "4", "5", "6", "7" ->
-					{
-						connection.test.lastSelectedAnswer = Integer.parseInt(data);
-						connection.test.editSelectedAnswer();
-					}
-					case "SEND_ANSWER" ->
-					{
-						connection.test.receiveAnswer();
-					}
-				}
+				processButtonsFromTesting(connection, data);
 			}
-			case CHECKING_VERSION ->
+		}
+	}
+
+	enum PersonalCommands
+	{
+		DOWNLOAD_LOGS, RE_READ_CONFIG, BOT_TURN_OFF, EDIT_COMPETITION, ADD_COMPETITION, EDIT_ACCOUNT, ADD_ACCOUNT, ACCOUNT_SEARCH, RATING_SEARCH, GLOBAL_RATING
+	}
+
+	private static void processPersonalCommands(String data)
+	{
+		PersonalCommands personalCommands;
+		try
+		{
+			personalCommands = Enum.valueOf(PersonalCommands.class, data);
+
+		}catch(IllegalArgumentException e)
+		{
+			return;
+		}
+
+		switch(personalCommands)
+		{
+
+			case DOWNLOAD_LOGS ->
 			{
-				String text = "";
+				SendBotMessage sendBotMessage = new SendBotMessage();
+				sendBotMessage.setSendFile(new MyFile(SYSTEM_LOG).getFile());
+				sendBotMessage.sendPreparedMessage();
 
-				switch(data)
-				{
-					case "0.1" ->
-					{
-						text = """
-								- Первая пробная версия, бот умеет отвечать на сообщения пользователя такими же сообщениями.
-																
-								- 06.09.2022""";
-					}
-					case "0.2" ->
-					{
-						text = """
-								- Добавлена система логирования --> Все действия в боте видны администратору.
-																
-								- Добавлена обработка всех видов команд, начинающихся с "/", но без реализации этих команд
-								                             
-								- Добавлена обработка кнопок ботом
-																
-								- 11.09.2022""";
-					}
-					case "0.3" ->
-					{
-						text = """
-								- Добавлена реализация команды /testing
-																
-								- Запущенна система тестирования V1 (вопросы идут вперемешку, ответы каждый раз перемешиваются, под сообщением бота есть кнопки с ответами).
+				sendBotMessage.setSendFile(new MyFile(TEST_LOG).getFile());
+				sendBotMessage.sendPreparedMessage();
+			}
+			case RE_READ_CONFIG ->
+			{
+				readConfig();
+				SendBotMessage.send("OK");
+			}
+			case BOT_TURN_OFF ->
+			{
+				SendBotMessage.send("Goodbye");
+				LoggerBot.log("Выключение бота из чата");
+				System.exit(0);
+			}
 
-								- Добавлена возможность боту - редактировать сообщение после взаимодействия от пользователя
-																
-								- 12.09.2022""";
-					}
-					case "0.4" ->
-					{
-						text = """
-								- Система тестирования улучшена до версии V2 (добавлена кнопка "Отправить" и возможность изменить выбранный ответ перед отправкой).
-																
-								- Добавлена возможность завершить тест досрочно командой */cancel*. После нее пользователь должен будет подтвердить выбор и ему придет результат тест.
-															
-								- Добавлена возможность боту - редактировать сообщение после взаимодействия от пользователя
-																
-								- Оптимизирована работа с несколькими пользователями одновременно, бот может работать независимо от количества активных пользователей
-																
-								- 14.09.2022""";
-					}
-					case "0.5" ->
-					{
-						text = """								
-								- Система тестирования улучшена до версии V3 (после прохождения теста, пользователю показывается его результат и время прохождения. Это же сообщение дублируется администраторам)
-																
-								- Увеличена стабильность бота, тест не прервется при отправке случайных сообщений или команд
-																
-								- 22.09.2022""";
-					}
-					case "0.6" ->
-					{
-						text = """
-								- *Актуальная версия*
-																
-								- Полностью переработана система взаимодействия с ботом, теперь "лишние сообщения" удаляются после отправки более новых
-																
-								- Повышена стабильность в случае работы с кнопками (можно нажимать и присылать что угодно, бот отреагирует правильно)
-																
-								- 24.09.2022""";
-					}
-					case "CANCEL" ->
-					{
-						Deleter.requestForDeletion(SendDifferentMessages.ActiveMessageType.VERSION_MESSAGE);
-						connection.setMenuStep(MenuStep.MENU);
-						return;
-					}
-				}
-				text += "\n\nВсе прошедшие версии:";
-				SendMessage message = new SendMessage();
-				message.setText(text);
-				message.setReplyMarkup(cache.connection.activeMessages.versionMessage.getReplyMarkup());
-				message.setChatId(Connection.getChatID());
-				Deleter.requestForDeletion(SendDifferentMessages.ActiveMessageType.VERSION_MESSAGE);
-				SendBotMessage.send(message);
+			case ADD_COMPETITION ->
+			{
+			}
+			case EDIT_COMPETITION ->
+			{
+			}
+			case ADD_ACCOUNT ->
+			{
+			}
+			case EDIT_ACCOUNT ->
+			{
+			}
+
+			case ACCOUNT_SEARCH ->
+			{
+			}
+			case RATING_SEARCH ->
+			{
+			}
+			case GLOBAL_RATING ->
+			{
+				showGlobalRating();
+			}
+		}
+
+	}
+
+	private static void showGlobalRating()
+	{
+
+	}
+
+	private static void processButtonsFromTesting(Connection connection, String data)
+	{
+		switch(data)
+		{
+			case "CANCEL_STARTED_TEST" ->
+			{
+				Deleter.requestForDeletion(SendDifferentMessages.ActiveMessageType.REQUEST_CANCEL_TEST_MESSAGE);
+				Deleter.requestForDeletion(SendDifferentMessages.ActiveMessageType.TEST_MESSAGE);
+
+				connection.setMenuStep(MenuStep.MENU);
+
+				SendBotMessage.send("Тест прерван");
+
+			}
+			case "CONTINUE" ->
+			{
+				Deleter.requestForDeletion(SendDifferentMessages.ActiveMessageType.REQUEST_CANCEL_TEST_MESSAGE);
+			}
+			case "1", "2", "3", "4", "5", "6", "7" ->
+			{
+				connection.test.lastSelectedAnswer = Integer.parseInt(data);
+				connection.test.editSelectedAnswer();
+			}
+			case "SEND_ANSWER" ->
+			{
+				connection.test.receiveAnswer();
+			}
+		}
+	}
+
+	private static void processButonsFromMenu(String data)
+	{
+		switch(data)
+		{
+			case "START_TEST" ->
+			{
+				Deleter.requestForDeletion(SendDifferentMessages.ActiveMessageType.REQUEST_START_TEST_MESSAGE);
+				SendDifferentMessages.send(SendDifferentMessages.ActiveMessageType.TEST_MESSAGE);
+				cache.connection.setMenuStep(MenuStep.PROCESS_TESTING);
+			}
+			case "CANCEL_TEST" ->
+			{
+				Deleter.requestForDeletion(SendDifferentMessages.ActiveMessageType.REQUEST_START_TEST_MESSAGE);
 			}
 		}
 	}
@@ -214,7 +219,7 @@ public class Processer
 	public static void processCommand(GlobalCommand command, String[] param)
 	{
 		Connection connection = cache.connection;
-		LoggerBot.logMethod("processCommand",Connection.getName(),command.toString());
+		LoggerBot.logMethod("processCommand", Connection.getName(), command.toString());
 		LoggerBot.log("");
 
 		switch(connection.menuStep)
@@ -276,17 +281,6 @@ public class Processer
 					//case FEMIDA -> {SendDifferentMessages.send(SendDifferentMessages.ActiveMessageType.FEMIDA_ACTIONS);}
 				}
 			}
-			case CHECKING_VERSION ->
-			{
-				switch(command)
-				{
-					case CANCEL ->
-					{
-						Deleter.requestForDeletion(SendDifferentMessages.ActiveMessageType.VERSION_MESSAGE);
-						connection.setMenuStep(MenuStep.MENU);
-					}
-				}
-			}
 			case PROCESS_TESTING ->
 			{
 				switch(command)
@@ -330,8 +324,8 @@ public class Processer
 		s += "Вам доступны следующие команды: ";
 
 		builder.addRow(Map.ofEntries(Map.entry("Добавить аккаунт", "add_account")));
-		builder.addRow(Map.ofEntries(Map.entry("Добавить соревнование", "add_competition")));
 		builder.addRow(Map.ofEntries(Map.entry("Изменить аккаунт", "edit_account")));
+		builder.addRow(Map.ofEntries(Map.entry("Добавить соревнование", "add_competition")));
 		builder.addRow(Map.ofEntries(Map.entry("Изменить соревнование", "edit_competition")));
 
 		SendMessage messageWithKeyboard = builder.getMessageWithKeyboard();
@@ -340,6 +334,7 @@ public class Processer
 
 		SendBotMessage.send(messageWithKeyboard);
 	}
+
 	private static void sendAdminCommands()
 	{
 		KeyboardBuilder builder = new KeyboardBuilder();
@@ -361,7 +356,7 @@ public class Processer
 	public static void processText(String text)
 	{
 		SendBotMessage.send(Properties.get("bot.replies.to.text.don't_know"));
-		LoggerBot.logMethod("processText",Connection.getName(),text);
+		LoggerBot.logMethod("processText", Connection.getName(), text);
 	}
 
 	public static void checkConnections()
@@ -451,7 +446,7 @@ public class Processer
 	}
 
 	public enum MenuStep
-	{MENU, PROCESS_TESTING, CHECKING_VERSION}
+	{MENU, PROCESS_TESTING}
 
 	public enum GlobalCommand
 	{CANCEL, TESTING, VERIFICATION, START, MY_COMMANDS}

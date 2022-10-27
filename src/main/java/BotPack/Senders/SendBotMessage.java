@@ -4,10 +4,14 @@ package main.java.BotPack.Senders;
 import main.java.BotPack.DataTypes.Connection;
 import main.java.BotPack.Processors.SendDifferentMessages;
 import org.telegram.telegrambots.meta.api.methods.ParseMode;
+import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+
+import java.io.File;
 
 import static main.java.BotPack.Processors.Processer.cache;
 import static main.java.Main.myBot;
@@ -17,10 +21,16 @@ public class SendBotMessage
 	private String msg;
 	private InlineKeyboardMarkup inlineKeyboardMarkup;
 	private SendDifferentMessages.ActiveMessageType messageType;
+	private File sendFile;
 
 	public void setText(String msg)
 	{
 		this.msg = msg;
+	}
+
+	public void setSendFile(File sendFile)
+	{
+		this.sendFile = sendFile;
 	}
 
 	public void setInlineKeyboardMarkup(InlineKeyboardMarkup inlineKeyboardMarkup)
@@ -35,6 +45,11 @@ public class SendBotMessage
 
 	public Message sendPreparedMessage()
 	{
+		if(sendFile != null)
+		{
+			return sendFileMessage();
+		}
+
 		SendMessage message = new SendMessage();
 		if(!msg.isEmpty()) message.setText(msg);
 		if(!(inlineKeyboardMarkup == null)) message.setReplyMarkup(inlineKeyboardMarkup);
@@ -58,10 +73,6 @@ public class SendBotMessage
 			{
 				cache.connection.activeMessages.requestCancelTest = result;
 			}
-			case VERSION_MESSAGE ->
-			{
-				cache.connection.activeMessages.versionMessage = result;
-			}
 			case LAST_SENT_MESSAGE ->
 			{
 				cache.connection.activeMessages.lastSentMessage = result;
@@ -70,6 +81,31 @@ public class SendBotMessage
 			{
 
 			}
+		}
+		return result;
+	}
+
+	private Message sendFileMessage()
+	{
+		SendDocument sendDocument = new SendDocument();
+		sendDocument.setChatId(Connection.getChatID());
+		sendDocument.setDocument(new InputFile(sendFile));
+
+		return send(sendDocument);
+	}
+
+	private Message send(SendDocument sendDocument)
+	{
+		Message result;
+		try
+		{
+			result = myBot.execute(sendDocument);
+			cache.connection.activeMessages.lastSentMessage = result;
+			LoggerBot.logChatMessage(result);
+
+		}catch(TelegramApiException e)
+		{
+			throw new RuntimeException(e);
 		}
 		return result;
 	}
@@ -97,10 +133,9 @@ public class SendBotMessage
 		{
 			throw new RuntimeException(e);
 		}
-		if(messageType.length>0)
-		{
 
-		}
 		return result;
 	}
+
+
 }
