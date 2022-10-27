@@ -1,5 +1,6 @@
 package main.java.Excel.SQLPack;
 
+import main.java.BotPack.FilesPack.MyFile;
 import main.java.BotPack.Senders.LoggerBot;
 import main.java.Config;
 import main.java.Excel.Competition;
@@ -54,7 +55,7 @@ public class SQLExcel // Функции для связи SQL и EXCEL
 
 		List<RefereeAccount> refereeAccounts = new ArrayList<>(); // Тот массив, который будем возвращать
 
-		InputStream excelInputStream = new FileInputStream(new File(new main.java.BotPack.FilesPack.File(FEMIDA_EXCEL).getPath().toUri()));
+		InputStream excelInputStream = new FileInputStream(new File(new MyFile(FEMIDA_EXCEL).getPath().toUri()));
 
 
 		XSSFWorkbook wb = new XSSFWorkbook(excelInputStream); // Книга с базой данных

@@ -2,7 +2,7 @@ package main.java.BotPack.DataTypes;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import main.java.BotPack.FilesPack.File;
+import main.java.BotPack.FilesPack.MyFile;
 import main.java.BotPack.Processors.Processer;
 import main.java.BotPack.Senders.LoggerBot;
 import main.java.BotPack.Senders.SendBotMessage;
@@ -130,7 +130,7 @@ public class Connection
 		LoggerBot.logMethod("verification", getName());
 		Map<String, TgBdRelation> map = new HashMap<>();
 
-		String verificationStrings = new File(VERIFICATION).readOneLine();
+		String verificationStrings = new MyFile(VERIFICATION).readOneLine();
 
 		Gson gson = new GsonBuilder().setLenient().create();
 		map = gson.fromJson(verificationStrings, map.getClass());
@@ -151,7 +151,7 @@ public class Connection
 				System.out.println("Введите имя аккаунта пользователя ТГ, который может вносить правки в Базу (например EgOnt)");
 				System.out.println("А затем ID этого человека в базе данных Femida");
 				System.out.println("");
-				System.out.println("Для вызова этого диалога еще раз удалите файл: " + new File(VERIFICATION).getPath());
+				System.out.println("Для вызова этого диалога еще раз удалите файл: " + new MyFile(VERIFICATION).getPath());
 				System.out.println();
 				String s;
 				map = new HashMap<>();
@@ -165,7 +165,7 @@ public class Connection
 
 				map.put(name, new TgBdRelation(id, TgBdRelation.Position.EDITOR));
 
-				new File(VERIFICATION).append(map);
+				new MyFile(VERIFICATION).append(map);
 
 				System.out.println("Сохранено: " + name + ": " + gson.toJson(map.get(name)));
 				System.out.println("Остальное сам вбей в вышеуказанном файле");
@@ -212,6 +212,10 @@ public class Connection
 			{
 				verificationCallback += "У вас есть права на редактирование базы Femida";
 			}
+			case ADMIN ->
+			{
+				verificationCallback += "Вашим правам нет границ, великий Админ";
+			}
 		}
 		LoggerBot.log("");
 		save();
@@ -220,7 +224,7 @@ public class Connection
 
 	public void save()
 	{
-		new File(SAVED_DATA).append(new UserDataToSave(this));
+		new MyFile(SAVED_DATA).write(new UserDataToSave(this));
 	}
 
 	public void setMenuStep(Processer.MenuStep newStep)

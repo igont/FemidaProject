@@ -3,7 +3,7 @@ package main.java.BotPack.TestingPack;
 import main.java.BotPack.Builders.KeyboardBuilder;
 import main.java.BotPack.DataTypes.Connection;
 import main.java.BotPack.DataTypes.TestDataToSave;
-import main.java.BotPack.FilesPack.File;
+import main.java.BotPack.FilesPack.MyFile;
 import main.java.BotPack.Processors.Deleter;
 import main.java.BotPack.Processors.Processer;
 import main.java.BotPack.Senders.LoggerBot;
@@ -139,7 +139,7 @@ public class Test
 		{
 			Question question = new Question();
 
-			List<String> lines = new File(TEST_NAME).read();
+			List<String> lines = new MyFile(TEST_NAME).read();
 
 			int numRight = 0;
 			String first;
@@ -260,7 +260,7 @@ public class Test
 
 		List<TestDataToSave> datas = new ArrayList<>();
 
-		File testLog = new File(TEST_LOG);
+		MyFile testLog = new MyFile(TEST_LOG);
 		datas = testLog.read(datas.getClass());
 
 		if(datas == null)

@@ -6,10 +6,10 @@ import main.java.BotPack.DataTypes.Connection;
 import main.java.BotPack.Senders.LoggerBot;
 import main.java.Config;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -17,24 +17,30 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
 
+import static main.java.BotPack.FilesPack.FileType.DIRECTORY;
+import static main.java.BotPack.FilesPack.FileType.FILE;
 import static main.java.BotPack.FilesPack.LocalJsonFormat.PRETTY;
 
-public class File
+public class MyFile
 {
 	private Path path;
 
+	private FileType fileType;
+
 	private LocalJsonFormat localJsonFormat;
 
-	public File(Path path)
+	public MyFile(Path path)
 	{
 		this.path = path;
 		this.localJsonFormat = PRETTY;
+		this.fileType = FILE;
 		createIfNoExist();
 	}
 
-	public File(ResourcesFiles resourcesFiles)
+	public MyFile(ResourcesFiles resourcesFiles)
 	{
 		this.localJsonFormat = PRETTY;
+		this.fileType = FILE;
 		setFilePath(resourcesFiles);
 		createIfNoExist();
 	}
@@ -52,7 +58,11 @@ public class File
 	public void createIfNoExist()
 	{
 		if(!directoryExist()) createDirectory();
-		if(!fileExist()) createFile();
+
+		if(fileType == FILE)
+		{
+			if(!fileExist()) createFile();
+		}
 	}
 
 	public List<String> read()
@@ -78,14 +88,14 @@ public class File
 
 	public void write(Object msg)
 	{
-		if(msg.getClass() == String.class) write((String) msg);
-		writeOrAppend(msg, StandardOpenOption.WRITE);
+		if(msg.getClass() == String.class) write(msg.toString());
+		else writeOrAppend(msg, StandardOpenOption.WRITE);
 	}
 
 	public void append(Object msg)
 	{
-		if(msg.getClass() == String.class) append((String) msg);
-		writeOrAppend(msg, StandardOpenOption.APPEND);
+		if(msg.getClass() == String.class) append(msg.toString());
+		else writeOrAppend(msg, StandardOpenOption.APPEND);
 	}
 
 	public void setFilePath(ResourcesFiles type)
@@ -100,17 +110,19 @@ public class File
 							yield Path.of(Config.resourcesPath + "User_data/" + Connection.getName() + "_data.json");
 						}catch(NullPointerException e)
 						{
-							yield Path.of(Config.resourcesPath + "User_data/" + "temp" + "_data.json");
+							setFileType(DIRECTORY);
+							yield Path.of(Config.resourcesPath + "User_data/");
 						}
 					}
 					case MESSAGE_LOG ->
 					{
 						try
 						{
-							yield Path.of(Config.resourcesPath + "User_messages/" + Connection.getName() + "_messages.json");
+							yield Path.of(Config.resourcesPath + "User_messages/" + Connection.getName() + "_messages.txt"); // txt потому, что в json всё будет красное от ошибок
 						}catch(NullPointerException e)
 						{
-							yield Path.of(Config.resourcesPath + "User_messages/" + "temp" + "_messages.json");
+							setFileType(DIRECTORY);
+							yield Path.of(Config.resourcesPath + "User_messages/");
 						}
 					}
 					case TEST_NAME -> Path.of(Config.resourcesPath + Config.testName);
@@ -122,7 +134,7 @@ public class File
 				};
 	}
 
-	public File clear()
+	public MyFile clear()
 	{
 		PrintWriter writer;
 		try
@@ -158,13 +170,13 @@ public class File
 	{
 		try
 		{
-			Files.createDirectories(path);
-			LoggerBot.logMethodReturn("createDirectory", path);
+			Files.createDirectories(path.getParent());
+			LoggerBot.logMethodReturn("createDirectory", path.getParent());
 			LoggerBot.log("");
 
 		}catch(IOException e)
 		{
-			LoggerBot.logMethodReturn("createFile", "IOException", path);
+			LoggerBot.logMethodReturn("createDirectory", "IOException", path);
 			LoggerBot.log("");
 
 			throw new RuntimeException(e);
@@ -205,7 +217,7 @@ public class File
 
 		try
 		{
-			Files.writeString(Paths.get(path.toUri()), msg,Charset. , standardOpenOption);
+			Files.writeString(Paths.get(path.toUri()), msg, standardOpenOption);
 		}catch(IOException e)
 		{
 			throw new RuntimeException(e);
@@ -218,10 +230,15 @@ public class File
 		return new Gson();
 	}
 
-	public File setJsonFormat(LocalJsonFormat localJsonFormat)
+	public MyFile setJsonFormat(LocalJsonFormat localJsonFormat)
 	{
 		this.localJsonFormat = localJsonFormat;
 		return this;
+	}
+
+	public void setFileType(FileType fileType)
+	{
+		this.fileType = fileType;
 	}
 
 	public Path getPath()
@@ -231,5 +248,12 @@ public class File
 	public Path getDirectory()
 	{
 		return path.getParent();
+	}
+	public File[] getInnerFiles()
+	{
+		if(fileType == FILE) return null;
+
+		File file = new File(getDirectory().toUri());
+		return file.listFiles();
 	}
 }

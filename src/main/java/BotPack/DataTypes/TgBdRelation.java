@@ -14,6 +14,7 @@ public class TgBdRelation
 	public enum Position
 	{
 		READER,
-		EDITOR
+		EDITOR,
+		ADMIN
 	}
 }

@@ -17,14 +17,13 @@ import static main.java.BotPack.FilesPack.ResourcesFiles.*;
 public class FilesManipulator
 {
 
-
 	public static void readConfig()
 	{
 		LoggerBot.log("readConfig()");
 
 		Map<String, String> map = new HashMap<>();
 
-		String s = new main.java.BotPack.FilesPack.File(CONFIG).readOneLine();
+		String s = new MyFile(CONFIG).readOneLine();
 
 		Gson gson = new GsonBuilder().setLenient().create();
 		map = gson.fromJson(s, map.getClass());
@@ -72,7 +71,7 @@ public class FilesManipulator
 			LoggerBot.log("refereeTableName", refereeTableName);
 			LoggerBot.log("excelFileName", excelFileName);
 
-			new main.java.BotPack.FilesPack.File(CONFIG).write(map);
+			new MyFile(CONFIG).write(map);
 		}
 		Config.testName = map.get("testName");
 		Config.refereeTableName = map.get("refereeTableName");
@@ -89,7 +88,7 @@ public class FilesManipulator
 	{
 		LoggerBot.log("loadSavedConnections()");
 
-		Path filePath = new main.java.BotPack.FilesPack.File(SAVED_DATA).getPath();
+		Path filePath = new MyFile(SAVED_DATA).getPath();
 
 		if(filePath == null)
 		{
@@ -118,7 +117,8 @@ public class FilesManipulator
 		{
 			if(file.isFile())
 			{
-				UserDataToSave userData = new main.java.BotPack.FilesPack.File(file.toPath()).read(UserDataToSave.class);
+				UserDataToSave userData = new MyFile(file.toPath()).read(UserDataToSave.class);
+				if(userData == null) break;
 
 				UserDataToSave.allUserDataToSave.add(userData);
 

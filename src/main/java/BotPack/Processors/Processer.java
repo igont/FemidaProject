@@ -3,6 +3,7 @@ package main.java.BotPack.Processors;
 import main.java.BotPack.Builders.KeyboardBuilder;
 import main.java.BotPack.DataTypes.Cache;
 import main.java.BotPack.DataTypes.Connection;
+import main.java.BotPack.DataTypes.TgBdRelation;
 import main.java.BotPack.DataTypes.UserDataToSave;
 import main.java.BotPack.Properties;
 import main.java.BotPack.Senders.LoggerBot;
@@ -246,25 +247,26 @@ public class Processer
 							return;
 						}
 						KeyboardBuilder builder = new KeyboardBuilder();
+
+						TgBdRelation.Position position = connection.tgBdRelation.position;
+
+
 						switch(connection.tgBdRelation.position)
 						{
 							case READER ->
 							{
-								String s = "Уровень доступа: читатель.\n\n";
-								s += "Вам доступны следующие команды: ";
-
-								builder.addRow(Map.ofEntries(Map.entry("\uD83C\uDF0FГлобальный рейтинг", "global_rating")));
-								builder.addRow(Map.ofEntries(Map.entry("\uD83D\uDD0EПоиск по рейтингу", "rating_search")));
-								builder.addRow(Map.ofEntries(Map.entry("\uD83D\uDC64Просмотр аккаунта", "rating_search")));
-
-								SendMessage messageWithKeyboard = builder.getMessageWithKeyboard();
-								messageWithKeyboard.setChatId(Connection.getChatID());
-								messageWithKeyboard.setText(s);
-
-								SendBotMessage.send(messageWithKeyboard);
+								sendReaderCommands();
 							}
 							case EDITOR ->
 							{
+								sendEditorCommands();
+								sendReaderCommands();
+							}
+							case ADMIN ->
+							{
+								sendAdminCommands();
+								sendEditorCommands();
+								sendReaderCommands();
 							}
 						}
 					}
@@ -301,6 +303,59 @@ public class Processer
 				}
 			}
 		}
+	}
+
+	private static void sendReaderCommands()
+	{
+		KeyboardBuilder builder = new KeyboardBuilder();
+		String s = "Уровень доступа: читатель.\n\n";
+		s += "Вам доступны следующие команды: ";
+
+		builder.addRow(Map.ofEntries(Map.entry("\uD83C\uDF0F Глобальный рейтинг", "global_rating")));
+		builder.addRow(Map.ofEntries(Map.entry("\uD83D\uDD0E Поиск по рейтингу", "rating_search")));
+		builder.addRow(Map.ofEntries(Map.entry("\uD83D\uDC64 Просмотр аккаунта", "account_search")));
+
+		SendMessage messageWithKeyboard = builder.getMessageWithKeyboard();
+		messageWithKeyboard.setChatId(Connection.getChatID());
+		messageWithKeyboard.setText(s);
+
+		SendBotMessage.send(messageWithKeyboard);
+	}
+
+	private static void sendEditorCommands()
+	{
+		KeyboardBuilder builder = new KeyboardBuilder();
+
+		String s = "Уровень доступа: редактор.\n\n";
+		s += "Вам доступны следующие команды: ";
+
+		builder.addRow(Map.ofEntries(Map.entry("Добавить аккаунт", "add_account")));
+		builder.addRow(Map.ofEntries(Map.entry("Добавить соревнование", "add_competition")));
+		builder.addRow(Map.ofEntries(Map.entry("Изменить аккаунт", "edit_account")));
+		builder.addRow(Map.ofEntries(Map.entry("Изменить соревнование", "edit_competition")));
+
+		SendMessage messageWithKeyboard = builder.getMessageWithKeyboard();
+		messageWithKeyboard.setChatId(Connection.getChatID());
+		messageWithKeyboard.setText(s);
+
+		SendBotMessage.send(messageWithKeyboard);
+	}
+	private static void sendAdminCommands()
+	{
+		KeyboardBuilder builder = new KeyboardBuilder();
+
+		String s = "Уровень доступа: Админ.\n\n";
+		s += "Вам доступны следующие команды: ";
+
+		builder.addRow(Map.ofEntries(Map.entry("Выключить бота", "bot_turn_off")));
+		builder.addRow(Map.ofEntries(Map.entry("Перечитать конфиг", "re_read_config")));
+		builder.addRow(Map.ofEntries(Map.entry("Скачать логи", "download_logs")));
+
+		SendMessage messageWithKeyboard = builder.getMessageWithKeyboard();
+		messageWithKeyboard.setChatId(Connection.getChatID());
+		messageWithKeyboard.setText(s);
+
+		SendBotMessage.send(messageWithKeyboard);
 	}
 
 	public static void processText(String text)
