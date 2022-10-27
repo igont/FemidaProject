@@ -1,11 +1,9 @@
 package main.java.BotPack.TestingPack;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import main.java.BotPack.Builders.KeyboardBuilder;
 import main.java.BotPack.DataTypes.Connection;
 import main.java.BotPack.DataTypes.TestDataToSave;
-import main.java.BotPack.FilesPack.FilesManipulator;
+import main.java.BotPack.FilesPack.File;
 import main.java.BotPack.Processors.Deleter;
 import main.java.BotPack.Processors.Processer;
 import main.java.BotPack.Senders.LoggerBot;
@@ -18,9 +16,11 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import java.util.*;
 
 import static main.java.BotPack.DataTypes.Connection.cloneListOfLists;
+import static main.java.BotPack.FilesPack.ResourcesFiles.TEST_LOG;
+import static main.java.BotPack.FilesPack.ResourcesFiles.TEST_NAME;
+import static main.java.BotPack.Processors.Processer.cache;
 import static main.java.BotPack.Processors.SendDifferentMessages.ActiveMessageType.TEST_MESSAGE;
 import static main.java.Main.myBot;
-import static main.java.BotPack.Processors.Processer.cache;
 
 public class Test
 {
@@ -28,7 +28,6 @@ public class Test
 	public int lastSelectedAnswer = 0;
 	private int startTime = 0;
 	private int endTime = 0;
-	private int testTime = 0;
 	private int maxGrade = 0;
 	private int grade = 0;
 	private Integer[] userAnswers;
@@ -36,7 +35,7 @@ public class Test
 	Random random = new Random();
 	private InlineKeyboardMarkup lastKeyboardMarkup;
 
-	private InlineKeyboardMarkup getLastKeyboardMarkup()
+	private InlineKeyboardMarkup getLastKeyboardMarkup() // Создаем копию клавиатуры и возвращаем
 	{
 		InlineKeyboardMarkup newInlineKeyboardMarkup = new InlineKeyboardMarkup();
 		newInlineKeyboardMarkup.setKeyboard(cloneListOfLists(lastKeyboardMarkup.getKeyboard()));
@@ -140,7 +139,7 @@ public class Test
 		{
 			Question question = new Question();
 
-			List<String> lines = FilesManipulator.read(FilesManipulator.ResourcesFiles.TEST_NAME);
+			List<String> lines = new File(TEST_NAME).read();
 
 			int numRight = 0;
 			String first;
@@ -159,19 +158,19 @@ public class Test
 					line = line.substring(first.indexOf(' ') + 1, line.length());
 					switch(first)
 					{
-						case "-" ->
+						case "-" -> // Строка с неправильным ответом
 						{
 							numRight++;
 							question.answers.add(line.substring(2));
 							maxGrade++;
 						}
-						case "+" ->
+						case "+" -> // Строка с правильным ответом
 						{
 							numRight++;
 							question.right = numRight;
 							question.answers.add(line.substring(2));
 						}
-						default ->
+						default -> // Строка с вопросом
 						{
 							question.question = line;
 						}
@@ -182,11 +181,9 @@ public class Test
 		LoggerBot.logMethodReturn("readAllQuestions", String.valueOf(questions.size()));
 	}
 
-	public void editButtons()
+	public void editSelectedAnswer() // Помечает скобками номер выбранного ответа на кнопке в боте
 	{
-		Connection connection = cache.connection;
-
-		SendMessage message = connection.getCopyOfLastBotQuestionMessage(); // Получаем клонированное сообщение бота c вопросом и кнопками
+		SendMessage message = cache.connection.getCopyOfLastBotQuestionMessage(); // Получаем клонированное сообщение бота c вопросом и кнопками
 		InlineKeyboardMarkup oldReplyMarkup = getLastKeyboardMarkup();
 
 		oldReplyMarkup.getKeyboard().get(0).get(lastSelectedAnswer - 1).setText("(" + lastSelectedAnswer + ")");
@@ -194,7 +191,7 @@ public class Test
 
 		EditMessageReplyMarkup editMessageReplyMarkup = new EditMessageReplyMarkup();
 		editMessageReplyMarkup.setReplyMarkup((InlineKeyboardMarkup) message.getReplyMarkup());
-		editMessageReplyMarkup.setMessageId(connection.activeMessages.lastBotQuestionMessage.getMessageId());
+		editMessageReplyMarkup.setMessageId(cache.connection.activeMessages.lastBotQuestionMessage.getMessageId());
 		editMessageReplyMarkup.setChatId(Connection.getChatID());
 
 		try
@@ -230,7 +227,6 @@ public class Test
 				{
 					taken = true;
 					question.right = newAnswers.size();
-					//question.question +=" "+ question.right;
 				}
 			}
 			question.answers = newAnswers;
@@ -243,16 +239,14 @@ public class Test
 		LoggerBot.logMethod("finnishTest", Connection.getName());
 
 		Calendar calendar = new GregorianCalendar();
+
 		endTime = calendar.get(Calendar.SECOND) + calendar.get(Calendar.MINUTE) * 60 + calendar.get(Calendar.HOUR_OF_DAY) * 60 * 60;
+		int testTime = endTime - startTime;
 
-		testTime = endTime - startTime;
 
-		int resultGrade = Math.round((float)grade / (float)maxGrade * 100);
+		int resultGrade = Math.round((float) grade / (float) maxGrade * 100);
 		SendBotMessage.send("Тест завершен, Результат: " + resultGrade + "%, Времени потрачено: " + testTime + " сек");
 
-		System.out.println("----------------");
-		System.out.println("Максимум баллов: " + maxGrade);
-		System.out.println("Набрано баллов: " + grade);
 		cache.connection.setMenuStep(Processer.MenuStep.MENU);
 
 		TestDataToSave data = new TestDataToSave();
@@ -265,11 +259,9 @@ public class Test
 		data.totalGrade = resultGrade;
 
 		List<TestDataToSave> datas = new ArrayList<>();
-		List<String> strings = FilesManipulator.read(FilesManipulator.ResourcesFiles.TEST_LOG);
-		String s = String.join("", strings);
 
-		Gson gson = new GsonBuilder().setLenient().create();
-		datas = gson.fromJson(s,datas.getClass());
+		File testLog = new File(TEST_LOG);
+		datas = testLog.read(datas.getClass());
 
 		if(datas == null)
 		{
@@ -277,7 +269,7 @@ public class Test
 		}
 		datas.add(data);
 
-		FilesManipulator.write(datas, FilesManipulator.ResourcesFiles.TEST_LOG, true, true);
+		testLog.write(datas);
 	}
 
 	public class Question

@@ -1,6 +1,5 @@
 package main.java.Excel.SQLPack;
 
-import main.java.BotPack.FilesPack.FilesManipulator;
 import main.java.BotPack.Senders.LoggerBot;
 import main.java.Config;
 import main.java.Excel.Competition;
@@ -21,6 +20,8 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+import static main.java.BotPack.FilesPack.ResourcesFiles.FEMIDA_EXCEL;
+
 public class SQLExcel // Функции для связи SQL и EXCEL
 {
 	public static final String DELIMETR = "-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------\n";
@@ -33,7 +34,7 @@ public class SQLExcel // Функции для связи SQL и EXCEL
 
 	public static void addRefereeAccount(RefereeAccount refereeAccount) throws SQLException // Добавляем нового судью
 	{
-		PreparedStatement preparedStatement = SQLMain.connection.prepareStatement("insert into "+ Config.refereeTableName +"(f_name, s_name, m_name, city, phone, calc_points, category, birth_year, club_type, club_name) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
+		PreparedStatement preparedStatement = SQLMain.connection.prepareStatement("insert into " + Config.refereeTableName + "(f_name, s_name, m_name, city, phone, calc_points, category, birth_year, club_type, club_name) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
 		preparedStatement.setString(1, refereeAccount.fName);
 		preparedStatement.setString(2, refereeAccount.sName);
 		preparedStatement.setString(3, refereeAccount.mName);
@@ -47,19 +48,14 @@ public class SQLExcel // Функции для связи SQL и EXCEL
 
 		preparedStatement.execute();
 	}
+
 	public static List<RefereeAccount> readParticipants() throws IOException, SQLException // Читаем все данные о судьях в файле
 	{
 
 		List<RefereeAccount> refereeAccounts = new ArrayList<>(); // Тот массив, который будем возвращать
 
-		File excelFile = new File(FilesManipulator.getFilePath(FilesManipulator.ResourcesFiles.FEMIDA_EXCEL).toUri());
-		InputStream excelInputStream = new FileInputStream(excelFile);
+		InputStream excelInputStream = new FileInputStream(new File(new main.java.BotPack.FilesPack.File(FEMIDA_EXCEL).getPath().toUri()));
 
-
-
-
-		//ClassLoader classloader = Thread.currentThread().getContextClassLoader();
-		//InputStream excelInputStream = classloader.getResourceAsStream(Config.excelFileName); // Читаем файл
 
 		XSSFWorkbook wb = new XSSFWorkbook(excelInputStream); // Книга с базой данных
 		XSSFSheet mySheet; // Лист книги
@@ -105,8 +101,7 @@ public class SQLExcel // Функции для связи SQL и EXCEL
 				refereeAccount.city = city;
 
 				String phone = "???";
-				if(mySheet.getRow(13).getCell(1).getCellType() == CellType.STRING)
-					phone = mySheet.getRow(13).getCell(1).getStringCellValue().trim();
+				if(mySheet.getRow(13).getCell(1).getCellType() == CellType.STRING) phone = mySheet.getRow(13).getCell(1).getStringCellValue().trim();
 
 				if(mySheet.getRow(13).getCell(1).getCellType() == CellType.NUMERIC)
 				{
@@ -115,8 +110,9 @@ public class SQLExcel // Функции для связи SQL и EXCEL
 				phone = phone.replaceAll("\\*номер телефона\\*", "???");
 
 				char[] c = phone.toCharArray();
-				if(c.length == 11) phone = c[0] + "-" + c[1] + c[2] + c[3] + "-" + c[4] + c[5] + c[6] + "-" + c[7] + c[8]+ "-" + c[9] + c[10];
-				else if (!phone.equals("???")) phone += " (Ошибка)";
+				if(c.length == 11) phone = c[0] + "-" + c[1] + c[2] + c[3] + "-" + c[4] + c[5] + c[6] + "-" + c[7] + c[8] + "-" + c[9] + c[10];
+				else
+					if(!phone.equals("???")) phone += " (Ошибка)";
 				refereeAccount.phone = phone;
 
 				String clubType = mySheet.getRow(13).getCell(4).getStringCellValue().trim();
@@ -131,16 +127,16 @@ public class SQLExcel // Функции для связи SQL и EXCEL
 			}catch(NullPointerException ignored)
 			{
 
-			}
-			catch(IllegalStateException e)
+			}catch(IllegalStateException e)
 			{
-				System.out.println("Ошибка!!! readParticipants() - IllegalStateException Фамилия: ["+refereeAccount.sName+"]");
+				System.out.println("Ошибка!!! readParticipants() - IllegalStateException Фамилия: [" + refereeAccount.sName + "]");
 				e.printStackTrace();//
 			}
 		}
-		LoggerBot.logMethodReturn("readParticipants",refereeAccounts.size());
+		LoggerBot.logMethodReturn("readParticipants", refereeAccounts.size());
 		return refereeAccounts;
 	}
+
 	public static List<Competition> readParticipantsCompetitions() throws IOException// Читает все соревнования, в которых учавствовали люди в EXCEL
 	{
 		//SQLMain.connect(Config.databaseName, Config.user, Config.userPass);
@@ -227,14 +223,16 @@ public class SQLExcel // Функции для связи SQL и EXCEL
 		}
 		return competitions;
 	}
-	public static void pullAccountsToTheTable(RefereeAccount refereeAccount,boolean clear) throws SQLException
+
+	public static void pullAccountsToTheTable(RefereeAccount refereeAccount, boolean clear) throws SQLException
 	{
 		List<RefereeAccount> refereeAccounts = Arrays.asList(refereeAccount);
-		pullAccountsToTheTable(refereeAccounts,clear);
+		pullAccountsToTheTable(refereeAccounts, clear);
 	}
-	public static void pullAccountsToTheTable(List<RefereeAccount> refereeAccounts,boolean clear) throws SQLException
+
+	public static void pullAccountsToTheTable(List<RefereeAccount> refereeAccounts, boolean clear) throws SQLException
 	{
-		String clearS = "delete from "+ Config.refereeTableName +"; ALTER SEQUENCE "+ Config.refereeTableName+"_id_seq RESTART WITH 1;";
+		String clearS = "delete from " + Config.refereeTableName + "; ALTER SEQUENCE " + Config.refereeTableName + "_id_seq RESTART WITH 1;";
 
 		if(clear)
 		{
@@ -246,8 +244,9 @@ public class SQLExcel // Функции для связи SQL и EXCEL
 		{
 			addRefereeAccount(refereeAccount); // Добавляем весь список
 		}
-		LoggerBot.logMethodReturn("addParticipants",refereeAccounts.size());
+		LoggerBot.logMethodReturn("addParticipants", refereeAccounts.size());
 	}
+
 	public static List<GlobalCompetition> convertCompetitionsToGlobalCompetitions(List<Competition> competitions) throws SQLException
 	{
 		List<GlobalCompetition> globalCompetitions = new ArrayList<>();
@@ -273,6 +272,7 @@ public class SQLExcel // Функции для связи SQL и EXCEL
 		}
 		return globalCompetitions;
 	}
+
 	public static String formatArray(List list)
 	{
 		StringBuilder out = new StringBuilder("{");

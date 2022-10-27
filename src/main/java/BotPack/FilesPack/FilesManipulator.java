@@ -2,7 +2,6 @@ package main.java.BotPack.FilesPack;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import main.java.BotPack.DataTypes.Connection;
 import main.java.BotPack.DataTypes.UserDataToSave;
 import main.java.BotPack.Processors.Processer;
 import main.java.BotPack.Senders.LoggerBot;
@@ -10,91 +9,14 @@ import main.java.Config;
 import main.java.Main;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.util.*;
+
+import static main.java.BotPack.FilesPack.ResourcesFiles.*;
 
 public class FilesManipulator
 {
-	public static List<String> read(Path path)
-	{
-		try
-		{
-			return Files.readAllLines(path, StandardCharsets.UTF_8);
-		}catch(IOException e)
-		{
-			throw new RuntimeException(e);
-		}
-	}
 
-	public static List<String> read(ResourcesFiles file)
-	{
-		try
-		{
-			return Files.readAllLines(getFilePath(file), StandardCharsets.UTF_8);
-		}catch(IOException e)
-		{
-			throw new RuntimeException(e);
-		}
-	}
-
-	public static void write(Object msg, ResourcesFiles file, boolean format, boolean clear)
-	{
-		Path path = getFilePath(file);
-
-		if(!Files.exists(path))
-		{
-			clear = true;
-			LoggerBot.log("Создал файл: [" + path + "]");
-			LoggerBot.log("");
-		}
-		if(clear)
-		{
-			PrintWriter writer;
-			try
-			{
-				writer = new PrintWriter(path.toFile());
-				writer.print("");
-				writer.close();
-			}catch(FileNotFoundException e)
-			{
-				throw new RuntimeException(e);
-			}
-		}
-
-		Gson gson = (format ? new GsonBuilder().setPrettyPrinting().create() : new Gson());
-		String message = gson.toJson(msg) + "\n";
-
-		try
-		{
-			Files.writeString(Paths.get(path.toUri()), message, StandardOpenOption.APPEND);
-		}catch(IOException e)
-		{
-			throw new RuntimeException(e);
-		}
-	}
-
-	public static void write(String msg, ResourcesFiles file, boolean clear)
-	{
-		Path path = getFilePath(file);
-		StandardOpenOption openOption = (clear ? StandardOpenOption.WRITE : StandardOpenOption.APPEND);
-
-		msg += "\n";
-
-		try
-		{
-			Files.writeString(Paths.get(path.toUri()), msg, openOption);
-		}catch(IOException e)
-		{
-			throw new RuntimeException(e);
-		}
-	}
 
 	public static void readConfig()
 	{
@@ -102,8 +24,7 @@ public class FilesManipulator
 
 		Map<String, String> map = new HashMap<>();
 
-		List<String> strings = read(ResourcesFiles.CONFIG);
-		String s = String.join("", strings);
+		String s = new main.java.BotPack.FilesPack.File(CONFIG).readOneLine();
 
 		Gson gson = new GsonBuilder().setLenient().create();
 		map = gson.fromJson(s, map.getClass());
@@ -151,7 +72,7 @@ public class FilesManipulator
 			LoggerBot.log("refereeTableName", refereeTableName);
 			LoggerBot.log("excelFileName", excelFileName);
 
-			FilesManipulator.write(map, ResourcesFiles.CONFIG, true, false);
+			new main.java.BotPack.FilesPack.File(CONFIG).write(map);
 		}
 		Config.testName = map.get("testName");
 		Config.refereeTableName = map.get("refereeTableName");
@@ -164,87 +85,18 @@ public class FilesManipulator
 		LoggerBot.log("");
 	}
 
-	public static Path getFilePath(ResourcesFiles type)
-	{
-		Path dataFilePath = null;
-		switch(type)
-		{
-			case CONFIG ->
-			{
-				dataFilePath = Path.of(Config.resourcesPath + "config.json");
-			}
-			case SAVED_DATA ->
-			{
-				try
-				{
-					dataFilePath = Path.of(Config.resourcesPath + "User_data/" + Connection.getName() + "_data.json");
-				}catch(NullPointerException ignored)
-				{
-					dataFilePath = Path.of(Config.resourcesPath + "User_data/");
-					createDirectory(dataFilePath);
-				}
-			}
-			case TEST_NAME ->
-			{
-				dataFilePath = Path.of(Config.resourcesPath + Config.testName);
-			}
-			case TEST_LOG ->
-			{
-				dataFilePath = Path.of(Config.resourcesPath + "test_log.json");
-			}
-			case VERIFICATION ->
-			{
-				dataFilePath = Path.of(Config.resourcesPath + "verification.json");
-			}
-			case MESSAGE_LOG ->
-			{
-				try
-				{
-					dataFilePath = Path.of(Config.resourcesPath + "User_messages/" + Connection.getName() + "_messages.txt");
-					if(!Files.exists(dataFilePath.getParent()))
-						createDirectory(dataFilePath.getParent());
-
-				}catch(NullPointerException ignored)
-				{
-					dataFilePath = Path.of(Config.resourcesPath + "User_messages/");
-					createDirectory(dataFilePath);
-				}
-			}
-			case SYSTEM_LOG ->
-			{
-				dataFilePath = Path.of(Config.resourcesPath + "system_log.txt");
-			}
-
-			case FEMIDA_EXCEL ->
-			{
-				dataFilePath = Path.of(Config.resourcesPath + "Femida.xlsx");
-			}
-			default ->
-			{
-				dataFilePath = null;
-			}
-		}
-
-		if(dataFilePath == null) return null;
-
-		if(!Files.exists(dataFilePath))
-		{
-			createFile(dataFilePath);
-		}
-		return dataFilePath;
-	}
-
 	public static String loadSavedConnections()
 	{
 		LoggerBot.log("loadSavedConnections()");
-		Path filePath = FilesManipulator.getFilePath(ResourcesFiles.SAVED_DATA);
+
+		Path filePath = new main.java.BotPack.FilesPack.File(SAVED_DATA).getPath();
 
 		if(filePath == null)
 		{
 			LoggerBot.log("Directory not exist");
 			return "Directory not exist";
 		}
-		LoggerBot.log("Directory",filePath);
+		LoggerBot.log("Directory", filePath);
 
 		File dir = new File(filePath.toUri());
 
@@ -266,9 +118,7 @@ public class FilesManipulator
 		{
 			if(file.isFile())
 			{
-				List<String> userStrings = FilesManipulator.read(file.toPath());
-				Gson gson = new GsonBuilder().setPrettyPrinting().create();
-				UserDataToSave userData = gson.fromJson(String.join("", userStrings), UserDataToSave.class);
+				UserDataToSave userData = new main.java.BotPack.FilesPack.File(file.toPath()).read(UserDataToSave.class);
 
 				UserDataToSave.allUserDataToSave.add(userData);
 
@@ -304,52 +154,5 @@ public class FilesManipulator
 		LoggerBot.log("");
 
 		return Config.resourcesPath;
-	}
-	private static void createDirectory(Path path)
-	{
-		try
-		{
-			Path created_directories = Files.createDirectories(path);
-			LoggerBot.log("Создал директорию: [" + created_directories + "]");
-			LoggerBot.log("");
-
-		}catch(IOException e)
-		{
-			LoggerBot.log("Директория не создалась: [" + path + "]");
-			LoggerBot.log("");
-
-			throw new RuntimeException(e);
-		}
-	}
-	private static void createFile(Path path)
-	{
-		PrintWriter writer;
-		try
-		{
-			writer = new PrintWriter(path.toFile());
-			writer.print("");
-			writer.close();
-
-			LoggerBot.log("Создал файл: [" + path + "]");
-			LoggerBot.log("");
-
-		}catch(FileNotFoundException e)
-		{
-			LoggerBot.log("Файл не создался: [" + path + "]");
-			LoggerBot.log("");
-			throw new RuntimeException(e);
-		}
-	}
-
-	public enum ResourcesFiles
-	{
-		CONFIG,
-		SAVED_DATA,
-		TEST_NAME,
-		TEST_LOG,
-		VERIFICATION,
-		MESSAGE_LOG,
-		SYSTEM_LOG,
-		FEMIDA_EXCEL
 	}
 }

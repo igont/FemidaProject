@@ -1,11 +1,14 @@
 package main.java.BotPack.Senders;
 
 import main.java.BotPack.DataTypes.MessageDataToSave;
-import main.java.BotPack.FilesPack.FilesManipulator;
+import main.java.BotPack.FilesPack.File;
 import main.java.BotPack.Processors.Processer;
 import org.telegram.telegrambots.meta.api.objects.Message;
 
 import java.util.Date;
+
+import static main.java.BotPack.FilesPack.ResourcesFiles.MESSAGE_LOG;
+import static main.java.BotPack.FilesPack.ResourcesFiles.SYSTEM_LOG;
 
 public class LoggerBot
 {
@@ -20,21 +23,17 @@ public class LoggerBot
 		else if(Processer.cache.update.hasCallbackQuery())
 			messageDataToSave.userText = Processer.cache.update.getCallbackQuery().getData();
 
-		FilesManipulator.write(messageDataToSave, FilesManipulator.ResourcesFiles.MESSAGE_LOG, true, false);
+		new File(MESSAGE_LOG).append(messageDataToSave);
 	}
 	public static void log(String var, Object val)
 	{
 		String s = var + " = [" + val.toString() + "]";
-		FilesManipulator.write(s, FilesManipulator.ResourcesFiles.SYSTEM_LOG,false);
+		new File(SYSTEM_LOG).append(s);
 	}
-	public static void log(String var, int val)
-	{
-		String s = var + " = [" + val + "]";
-		FilesManipulator.write(s, FilesManipulator.ResourcesFiles.SYSTEM_LOG,false);
-	}
+
 	public static void log(String s)
 	{
-		FilesManipulator.write(s, FilesManipulator.ResourcesFiles.SYSTEM_LOG,false);
+		new File(SYSTEM_LOG).append(s);
 	}
 	public static void logMethod(String method, Object...variables)
 	{
@@ -44,7 +43,8 @@ public class LoggerBot
 			s += String.format(" [%s],",var.toString());
 		}
 		s = s.substring(0, s.length() - 1);
-		FilesManipulator.write(s, FilesManipulator.ResourcesFiles.SYSTEM_LOG,false);
+
+		new File(SYSTEM_LOG).append(s);
 	}
 	public static void logMethodReturn(String method, Object...variables)
 	{
@@ -54,7 +54,8 @@ public class LoggerBot
 			s += String.format(" [%s],",var.toString());
 		}
 		s = s.substring(0, s.length() - 1);
-		FilesManipulator.write(s, FilesManipulator.ResourcesFiles.SYSTEM_LOG,false);
+
+		new File(SYSTEM_LOG).append(s);
 	}
 
 }

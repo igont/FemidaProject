@@ -2,7 +2,7 @@ package main.java.BotPack.DataTypes;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import main.java.BotPack.FilesPack.FilesManipulator;
+import main.java.BotPack.FilesPack.File;
 import main.java.BotPack.Processors.Processer;
 import main.java.BotPack.Senders.LoggerBot;
 import main.java.BotPack.Senders.SendBotMessage;
@@ -18,6 +18,8 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import java.sql.SQLException;
 import java.util.*;
 
+import static main.java.BotPack.FilesPack.ResourcesFiles.SAVED_DATA;
+import static main.java.BotPack.FilesPack.ResourcesFiles.VERIFICATION;
 import static main.java.BotPack.Processors.Processer.cache;
 
 public class Connection
@@ -128,7 +130,7 @@ public class Connection
 		LoggerBot.logMethod("verification", getName());
 		Map<String, TgBdRelation> map = new HashMap<>();
 
-		String verificationStrings = String.join("", FilesManipulator.read(FilesManipulator.ResourcesFiles.VERIFICATION));
+		String verificationStrings = new File(VERIFICATION).readOneLine();
 
 		Gson gson = new GsonBuilder().setLenient().create();
 		map = gson.fromJson(verificationStrings, map.getClass());
@@ -149,7 +151,7 @@ public class Connection
 				System.out.println("Введите имя аккаунта пользователя ТГ, который может вносить правки в Базу (например EgOnt)");
 				System.out.println("А затем ID этого человека в базе данных Femida");
 				System.out.println("");
-				System.out.println("Для вызова этого диалога еще раз удалите файл: " + FilesManipulator.getFilePath(FilesManipulator.ResourcesFiles.VERIFICATION));
+				System.out.println("Для вызова этого диалога еще раз удалите файл: " + new File(VERIFICATION).getPath());
 				System.out.println();
 				String s;
 				map = new HashMap<>();
@@ -162,7 +164,9 @@ public class Connection
 				int id = in.nextInt();
 
 				map.put(name, new TgBdRelation(id, TgBdRelation.Position.EDITOR));
-				FilesManipulator.write(map, FilesManipulator.ResourcesFiles.VERIFICATION, true, true);
+
+				new File(VERIFICATION).append(map);
+
 				System.out.println("Сохранено: " + name + ": " + gson.toJson(map.get(name)));
 				System.out.println("Остальное сам вбей в вышеуказанном файле");
 			}
@@ -216,7 +220,7 @@ public class Connection
 
 	public void save()
 	{
-		FilesManipulator.write(new UserDataToSave(this), FilesManipulator.ResourcesFiles.SAVED_DATA, true, true);
+		new File(SAVED_DATA).append(new UserDataToSave(this));
 	}
 
 	public void setMenuStep(Processer.MenuStep newStep)

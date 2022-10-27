@@ -18,9 +18,18 @@ public class Main
 
 	public static void main(String[] args)
 	{
-		firstStart();
+		Logger logger = LoggerFactory.getLogger(Main.class); // Подключаем херню для логов каких-то
 
 
+		System.out.println("Starting Femida Project...");
+		System.out.println("------------------------------------------------------------------");
+		System.out.println("Resources path:         " + FilesManipulator.getResourcesPath());                                   // Получаем путь до файла с ресурсами
+		readConfig();                                                                                                           // Читаем переменные из файла
+		System.out.println("Connecting bot:         " + startBot());                                                            // Запускаем Long pooling Телеграм бота
+		System.out.println("PostgreSQL:             " + SQLMain.connect(Config.databaseName, Config.user, Config.userPass));    // Подключаемся к базе данных Postgres
+		System.out.println("Connections loaded:     " + FilesManipulator.loadSavedConnections());                               // Загружаем аккаунты пользователей, сохраненные с прошлых сессий
+		System.out.println("------------------------------------------------------------------");
+		System.out.println("");
 
 		/*RefereeAccount refereeAccount = new RefereeAccount();
 		refereeAccount.fName = "Игорь";
@@ -49,29 +58,17 @@ public class Main
 
 	}
 
-	public static void firstStart()
+	private static String startBot()
 	{
-		Logger logger = LoggerFactory.getLogger(Main.class); // Подключаем херню для логов каких-то
-
-		System.out.println("Starting Femida Project...");
-		System.out.println("------------------------------------------------------------------");
-		System.out.println("Resources path:         " + FilesManipulator.getResourcesPath());       // Получаем путь до файла с ресурсами
-		readConfig(); // Читаем переменные из файла
-
 		try
 		{
 			TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
 			botsApi.registerBot(myBot);
-			System.out.println("Telegram bot:           " +"Connected");
+			return "Connected";
 		}catch(TelegramApiException e)
 		{
-			System.out.println("Telegram bot:           " +"Error");
-			throw new RuntimeException(e);
+			e.printStackTrace();
+			return "Error";
 		}
-
-		System.out.println("PostgreSQL:             " + SQLMain.connect(Config.databaseName, Config.user, Config.userPass));    // Подключаемся к базе данных Postgres
-		System.out.println("Connections loaded:     " + FilesManipulator.loadSavedConnections());                               // Загружаем аккаунты пользователей, сохраненные с прошлых сессий
-		System.out.println("------------------------------------------------------------------");
-		System.out.println("");
 	}
 }

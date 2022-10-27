@@ -84,7 +84,7 @@ public class Processer
 					case "1", "2", "3", "4", "5", "6", "7" ->
 					{
 						connection.test.lastSelectedAnswer = Integer.parseInt(data);
-						connection.test.editButtons();
+						connection.test.editSelectedAnswer();
 					}
 					case "SEND_ANSWER" ->
 					{
